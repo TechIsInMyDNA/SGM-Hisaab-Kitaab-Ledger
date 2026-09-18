@@ -780,12 +780,46 @@ function initCloudSync() {
 }
 
 function syncToCloud() {
+  if (!navigator.onLine) {
+    const badge = document.getElementById('liveSyncBadge');
+    if (badge) {
+      badge.className = 'live-badge offline';
+      badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Offline (Local Saved)';
+    }
+    return; // Will automatically sync as soon as internet reconnects!
+  }
   if (fbDatabaseRef && Store.secretKey) {
     const payload = JSON.stringify({ firms: Store.firms });
     const cipher = encryptPayload(payload, Store.secretKey);
-    fbDatabaseRef.set(cipher);
+    fbDatabaseRef.set(cipher).then(() => {
+      const badge = document.getElementById('liveSyncBadge');
+      if (badge) {
+        badge.className = 'live-badge online';
+        badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync';
+      }
+    }).catch((err) => {
+      console.warn("Cloud sync queued:", err);
+    });
   }
 }
+
+// Auto sync when network returns
+window.addEventListener('online', () => {
+  const badge = document.getElementById('liveSyncBadge');
+  if (badge) {
+    badge.className = 'live-badge online';
+    badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Syncing...';
+  }
+  syncToCloud();
+});
+
+window.addEventListener('offline', () => {
+  const badge = document.getElementById('liveSyncBadge');
+  if (badge) {
+    badge.className = 'live-badge offline';
+    badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Offline (Local Saved)';
+  }
+});
 
 // ================= GRAND TOTALS (Kitna Lena Hai & Dena Hai) =================
 function calculateGrandTotals() {
