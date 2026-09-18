@@ -8,6 +8,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
 <!-- CryptoJS AES 256 for Zero-Knowledge Client Encryption -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -254,9 +256,14 @@
         <div class="fpill" onclick="setCustomerFilter('advance', this)">Advance</div>
         <div class="fpill" onclick="setCustomerFilter('zero', this)">Settled (₹0)</div>
       </div>
-      <div class="search-input-box">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="custSearchBox" placeholder="Search Customer Name or Mobile..." oninput="renderCustomerList()">
+      <div style="display:flex; gap:8px; align-items:center;">
+        <div class="search-input-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="custSearchBox" placeholder="Search Customer Name or Mobile..." oninput="renderCustomerList()">
+        </div>
+        <button class="btn-top" style="border-radius:20px; padding:8px 12px; background:#f8fafc;" onclick="openFilterModal()" title="Sort & Filter">
+          <i class="fa-solid fa-arrow-down-wide-short" style="color:var(--primary);"></i>
+        </button>
       </div>
     </div>
 
@@ -289,6 +296,9 @@
             <div style="display:flex; gap:12px; align-items:center;">
               <button class="btn-top" style="padding:5px 9px; font-size:12px; background:#ecfdf5; color:#065f46; border-color:#a7f3d0;" onclick="shareCustomerLedgerWA()" title="Share Ledger Statement on WhatsApp">
                 <i class="fa-brands fa-whatsapp"></i> <span class="hide-mobile">Share</span>
+              </button>
+              <button class="btn-top" style="padding:5px 9px; font-size:12px; background:#fef3c7; color:#92400e; border-color:#fde68a;" onclick="openQrCollectionModal()" title="UPI QR Code Collection">
+                <i class="fa-solid fa-qrcode"></i> <span class="hide-mobile">UPI QR</span>
               </button>
               <button class="btn-top" style="padding:5px 9px; font-size:12px; background:#eff6ff; color:#1e40af; border-color:#bfdbfe;" onclick="printCustomerLedgerPDF()" title="Print / Download PDF Statement">
                 <i class="fa-solid fa-file-pdf"></i> <span class="hide-mobile">PDF / Print</span>
@@ -492,6 +502,138 @@
     </div>
     <div class="modal-body" id="printStatementBody" style="padding:20px; font-size:13px; color:#1e293b;">
       <!-- Dynamic Statement Content -->
+    </div>
+  </div>
+</div>
+
+
+<!-- ================= OKCREDIT STYLE SORT & FILTER MODAL (IMAGE 2) ================= -->
+<div class="modal-overlay" id="filterModal">
+  <div class="modal-box" style="max-width:420px; border-radius:20px 20px 0 0; margin-top:auto; margin-bottom:0;">
+    <div class="modal-head" style="border-bottom:1px solid var(--border-color);">
+      <h3 style="font-size:16px; font-weight:800;">Filter</h3>
+      <i class="fa-solid fa-xmark" style="font-size:20px; cursor:pointer;" onclick="closeFilterModal()"></i>
+    </div>
+    <div style="display:flex; min-height:240px; border-bottom:1px solid var(--border-color);">
+      <!-- Left Tabs -->
+      <div style="width:130px; border-right:1px solid var(--border-color); background:#f8fafc; display:flex; flex-direction:column;">
+        <div id="filterTabSort" onclick="switchFilterTab('sort')" style="padding:14px 12px; font-size:13px; font-weight:800; color:var(--primary); border-left:4px solid var(--primary); background:#fff; cursor:pointer;">
+          Sort By
+        </div>
+        <div id="filterTabRemind" onclick="switchFilterTab('remind')" style="padding:14px 12px; font-size:13px; font-weight:700; color:var(--text-muted); border-left:4px solid transparent; cursor:pointer;">
+          Reminder Date
+        </div>
+      </div>
+      <!-- Right Options -->
+      <div style="flex:1; padding:12px 16px; overflow-y:auto;">
+        <div id="filterPanelSort">
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
+            <span>Default</span>
+            <input type="radio" name="sortOption" value="default" checked style="accent-color:var(--primary); transform:scale(1.2);">
+          </label>
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
+            <span>Last Payment</span>
+            <input type="radio" name="sortOption" value="last_payment" style="accent-color:var(--primary); transform:scale(1.2);">
+          </label>
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
+            <span>Latest Activity</span>
+            <input type="radio" name="sortOption" value="latest_activity" style="accent-color:var(--primary); transform:scale(1.2);">
+          </label>
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
+            <span>Due Amount</span>
+            <input type="radio" name="sortOption" value="due_amount" style="accent-color:var(--primary); transform:scale(1.2);">
+          </label>
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
+            <span>Name</span>
+            <input type="radio" name="sortOption" value="name" style="accent-color:var(--primary); transform:scale(1.2);">
+          </label>
+        </div>
+        <div id="filterPanelRemind" style="display:none;">
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
+            <span>All Reminders</span>
+            <input type="radio" name="remindOption" value="all" checked style="accent-color:var(--primary); transform:scale(1.2);">
+          </label>
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
+            <span>Due Today</span>
+            <input type="radio" name="remindOption" value="today" style="accent-color:var(--primary); transform:scale(1.2);">
+          </label>
+          <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
+            <span>Defaulters (7+ days)</span>
+            <input type="radio" name="remindOption" value="defaulters" style="accent-color:var(--primary); transform:scale(1.2);">
+          </label>
+        </div>
+      </div>
+    </div>
+    <!-- Bottom Buttons: Clear & Apply -->
+    <div style="display:flex; gap:12px; padding:14px 16px;">
+      <button class="btn-top" style="flex:1; justify-content:center; border-radius:24px; padding:10px; font-weight:800;" onclick="clearSortFilters()">Clear</button>
+      <button class="btn-top" style="flex:1; justify-content:center; border-radius:24px; padding:10px; font-weight:800; background:var(--primary); color:#fff; border:none;" onclick="applySortFilters()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= DYNAMIC UPI QR CODE COLLECTION MODAL (IMAGE 1) ================= -->
+<div class="modal-overlay" id="qrCollectionModal">
+  <div class="modal-box" style="max-width:440px; border-radius:20px; overflow:hidden;">
+    <div class="modal-head" style="background:#fff;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="closeQrCollectionModal()"></i>
+        <h3 style="font-size:16px; font-weight:800;">Collection</h3>
+      </div>
+      <i class="fa-solid fa-xmark" style="font-size:20px; cursor:pointer;" onclick="closeQrCollectionModal()"></i>
+    </div>
+    <div class="modal-body" style="padding:14px 16px; background:#f8fafc;">
+      <!-- Customer Info Strip -->
+      <div style="display:flex; align-items:center; justify-content:space-between; background:#fff; padding:10px 14px; border-radius:12px; border:1px solid var(--border-color); margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="cust-avatar-circle" id="qrCustAvatar" style="width:36px; height:36px; font-size:14px; background:#059669;">D</div>
+          <div>
+            <div style="font-weight:800; font-size:14px;" id="qrCustName">Deepak M.</div>
+            <div style="font-size:11px; color:var(--text-muted);" id="qrCustSub">Credit Added</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:15px; font-weight:900; color:var(--danger);" id="qrCustBal">₹2,027</div>
+          <div style="font-size:10px; font-weight:700; color:var(--danger);">Due</div>
+        </div>
+      </div>
+
+      <!-- Main White QR Card -->
+      <div style="background:#fff; border-radius:16px; border:1px solid var(--border-color); padding:16px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+        <div style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:4px;">Payment Due Reminder!</div>
+        
+        <!-- Editable Custom Amount -->
+        <div style="display:flex; align-items:center; justify-content:center; gap:4px; margin-bottom:12px;">
+          <span style="font-size:22px; font-weight:900; color:#0f172a;">₹</span>
+          <input type="number" id="qrCustomAmount" style="font-size:24px; font-weight:900; color:#0f172a; width:130px; border:none; border-bottom:2px dashed var(--primary); text-align:center; outline:none; background:transparent;" oninput="regenerateQrCode()" placeholder="0">
+        </div>
+
+        <!-- QR Code Canvas / Box -->
+        <div style="display:flex; justify-content:center; align-items:center; min-height:190px; margin-bottom:10px;">
+          <div id="qrCodeContainer" style="padding:10px; background:#fff; border:1px solid #e2e8f0; border-radius:12px;"></div>
+        </div>
+
+        <!-- Shop Name & Editable UPI ID -->
+        <div style="font-size:12px; font-weight:800; color:#1e293b;" id="qrShopName">Shree Ganesh Medicals</div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:4px;">
+          <span style="font-size:11px; color:var(--text-muted);">UPI ID:</span>
+          <input type="text" id="qrUpiIdInput" style="font-size:11px; font-weight:700; color:#2563eb; border:1px solid #cbd5e1; border-radius:6px; padding:2px 8px; text-align:center; width:160px; outline:none;" value="sgm144@ptyces" oninput="regenerateQrCode()">
+        </div>
+
+        <!-- Supported UPI Logos Indicator -->
+        <div style="display:flex; justify-content:center; align-items:center; gap:16px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0; font-size:11px; font-weight:700; color:#475569;">
+          <span><i class="fa-brands fa-google-pay" style="font-size:18px; color:#4285f4;"></i> GPay</span>
+          <span><i class="fa-solid fa-mobile-screen" style="font-size:14px; color:#6739b7;"></i> PhonePe</span>
+          <span><i class="fa-solid fa-wallet" style="font-size:14px; color:#00b9f1;"></i> Paytm</span>
+          <span><i class="fa-solid fa-building-columns" style="font-size:14px; color:#f97316;"></i> BHIM</span>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons on QR View -->
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="btn-top" style="flex:1; justify-content:center; border-radius:24px; padding:8px 12px; font-size:12px;" onclick="callCustomer()"><i class="fa-solid fa-phone"></i> Call</button>
+        <button class="btn-top" style="flex:1; justify-content:center; border-radius:24px; padding:8px 12px; font-size:12px; background:#ecfdf5; color:#065f46; border-color:#a7f3d0;" onclick="sendQrWhatsApp()"><i class="fa-brands fa-whatsapp"></i> Send WhatsApp</button>
+      </div>
     </div>
   </div>
 </div>
@@ -797,7 +939,22 @@ function renderCustomerList() {
   if (!firm || !firm.customers) return;
 
   const arr = Object.values(firm.customers);
-  arr.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  // Apply Sort By (Image 2)
+  if (activeSortOption === 'due_amount') {
+    arr.sort((a,b) => parseFloat(b.balance || 0) - parseFloat(a.balance || 0));
+  } else if (activeSortOption === 'name') {
+    arr.sort((a,b) => a.name.localeCompare(b.name));
+  } else if (activeSortOption === 'last_payment') {
+    arr.sort((a,b) => {
+      const lastA = (a.transactions || []).filter(t => t.type === 'RECEIVED').slice(-1)[0]?.timestamp || 0;
+      const lastB = (b.transactions || []).filter(t => t.type === 'RECEIVED').slice(-1)[0]?.timestamp || 0;
+      return lastB - lastA;
+    });
+  } else if (activeSortOption === 'latest_activity') {
+    arr.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  } else {
+    arr.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  }
 
   let rendered = 0;
   arr.forEach(c => {
@@ -1559,6 +1716,150 @@ Dhanyawad!
   window.open(`https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}`, '_blank');
 }
 
+
+
+// ================= SORT & FILTER LOGIC (IMAGE 2) =================
+let activeSortOption = 'default';
+let activeRemindOption = 'all';
+
+function openFilterModal() {
+  document.getElementById('filterModal').style.display = 'flex';
+}
+
+function closeFilterModal() {
+  document.getElementById('filterModal').style.display = 'none';
+}
+
+function switchFilterTab(tab) {
+  if (tab === 'sort') {
+    document.getElementById('filterTabSort').style.borderLeft = '4px solid var(--primary)';
+    document.getElementById('filterTabSort').style.background = '#fff';
+    document.getElementById('filterTabSort').style.color = 'var(--primary)';
+    document.getElementById('filterTabRemind').style.borderLeft = '4px solid transparent';
+    document.getElementById('filterTabRemind').style.background = '#f8fafc';
+    document.getElementById('filterTabRemind').style.color = 'var(--text-muted)';
+    document.getElementById('filterPanelSort').style.display = 'block';
+    document.getElementById('filterPanelRemind').style.display = 'none';
+  } else {
+    document.getElementById('filterTabRemind').style.borderLeft = '4px solid var(--primary)';
+    document.getElementById('filterTabRemind').style.background = '#fff';
+    document.getElementById('filterTabRemind').style.color = 'var(--primary)';
+    document.getElementById('filterTabSort').style.borderLeft = '4px solid transparent';
+    document.getElementById('filterTabSort').style.background = '#f8fafc';
+    document.getElementById('filterTabSort').style.color = 'var(--text-muted)';
+    document.getElementById('filterPanelSort').style.display = 'none';
+    document.getElementById('filterPanelRemind').style.display = 'block';
+  }
+}
+
+function applySortFilters() {
+  const selectedSort = document.querySelector('input[name="sortOption"]:checked');
+  if (selectedSort) activeSortOption = selectedSort.value;
+  const selectedRemind = document.querySelector('input[name="remindOption"]:checked');
+  if (selectedRemind) activeRemindOption = selectedRemind.value;
+
+  closeFilterModal();
+  renderCustomerList();
+}
+
+function clearSortFilters() {
+  activeSortOption = 'default';
+  activeRemindOption = 'all';
+  const defaultRadio = document.querySelector('input[name="sortOption"][value="default"]');
+  if (defaultRadio) defaultRadio.checked = true;
+  const defaultRemind = document.querySelector('input[name="remindOption"][value="all"]');
+  if (defaultRemind) defaultRemind.checked = true;
+
+  closeFilterModal();
+  renderCustomerList();
+}
+
+// ================= DYNAMIC UPI QR CODE GENERATOR (IMAGE 1) =================
+let qrCodeObj = null;
+
+function openQrCollectionModal() {
+  if (!selectedCustomerId) return;
+  const firm = Store.firms[Store.activeFirmId];
+  const cust = firm.customers[selectedCustomerId];
+  if (!cust) return;
+
+  document.getElementById('qrCustName').innerText = cust.name;
+  document.getElementById('qrCustAvatar').innerText = cust.name.charAt(0).toUpperCase();
+  document.getElementById('qrCustAvatar').style.background = getAvatarBg(cust.name);
+  
+  const bal = parseFloat(cust.balance || 0);
+  const displayBal = bal > 0 ? bal : 0;
+  document.getElementById('qrCustBal').innerText = `₹${Math.abs(bal).toFixed(1)}`;
+  document.getElementById('qrCustomAmount').value = displayBal.toFixed(1);
+  document.getElementById('qrShopName').innerText = firm.name || "Shree Ganesh Medicals";
+
+  if (!Store.upiId) Store.upiId = "sgm144@ptyces";
+  document.getElementById('qrUpiIdInput').value = Store.upiId;
+
+  document.getElementById('qrCollectionModal').style.display = 'flex';
+  regenerateQrCode();
+}
+
+function closeQrCollectionModal() {
+  document.getElementById('qrCollectionModal').style.display = 'none';
+}
+
+function regenerateQrCode() {
+  const upiId = document.getElementById('qrUpiIdInput').value.trim() || "sgm144@ptyces";
+  Store.upiId = upiId;
+  const amt = parseFloat(document.getElementById('qrCustomAmount').value) || 0;
+  const firm = Store.firms[Store.activeFirmId] || { name: "Shree Ganesh Medicals" };
+  const cust = firm.customers ? firm.customers[selectedCustomerId] : null;
+  const custName = cust ? cust.name : "Customer";
+
+  // Standard UPI URI format
+  let upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(firm.name)}&cu=INR&tn=${encodeURIComponent('Payment for ' + custName)}`;
+  if (amt > 0) {
+    upiUrl += `&am=${amt.toFixed(2)}`;
+  }
+
+  const container = document.getElementById('qrCodeContainer');
+  container.innerHTML = '';
+  qrCodeObj = new QRCode(container, {
+    text: upiUrl,
+    width: 170,
+    height: 170,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+function sendQrWhatsApp() {
+  if (!selectedCustomerId) return;
+  const firm = Store.firms[Store.activeFirmId];
+  const cust = firm.customers[selectedCustomerId];
+  if (!cust || !cust.phone) return alert("Customer ka mobile number nahi mila!");
+
+  const upiId = document.getElementById('qrUpiIdInput').value.trim() || "sgm144@ptyces";
+  const amt = parseFloat(document.getElementById('qrCustomAmount').value) || parseFloat(cust.balance || 0);
+  const dtStr = getFormattedDateTime();
+
+  const upiPayLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(firm.name)}&am=${amt.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Payment to ' + firm.name)}`;
+
+  const msg = `Dt:- *${dtStr}*\n\n` +
+              `सादर नमस्कार ${cust.name} जी,\n\n` +
+              `आशा है कि आप प्रसन्न और स्वस्थ हैं।\n` +
+              `आपके खाते की कुल बकाया राशि ( *₹${amt.toFixed(1)}* ) है।\n\n` +
+              `आप नीचे दिए गए UPI लिंक से किसी भी ऐप (GPay / PhonePe / Paytm) द्वारा डायरेक्ट पेमेंट कर सकते हैं:\n` +
+              `${upiPayLink}\n\n` +
+              `UPI ID: *${upiId}*\n\n` +
+              `सप्रेम,\n` +
+              `${firm.name}\n\n` +
+              `Mode Of Payment:- UPI QR\n` +
+              `Amount:- ₹${amt.toFixed(1)}\n` +
+              `Payee Name:- ${cust.name}\n` +
+              `Payee Sign:- ${firm.name}`;
+
+  const clean = cust.phone.replace(/[^0-9]/g, '');
+  const ph = clean.length === 10 ? '91' + clean : clean;
+  window.open(`https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}`, '_blank');
+}
 
 // ================= CLOUD CONFIG MODAL =================
 function openCloudConfigModal() {
