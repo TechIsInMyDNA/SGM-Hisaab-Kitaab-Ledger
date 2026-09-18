@@ -9,7 +9,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
 <!-- CryptoJS AES 256 for Zero-Knowledge Client Encryption -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,11 +28,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg-body); color: var(--text-dark); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-
-  /* App Wrapper for Responsive Dual Layout */
   .app-layout { display: flex; height: 100vh; width: 100%; max-width: 1400px; margin: 0 auto; background: #fff; box-shadow: 0 0 25px rgba(0,0,0,0.06); }
-  
-  /* Sidebar (Firm / Book Switcher on Desktop) */
   .firm-sidebar { width: 260px; background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; border-right: 1px solid #334155; }
   .firm-sidebar-header { padding: 18px 16px; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
   .brand-tag { font-size: 17px; font-weight: 800; color: #34d399; display: flex; align-items: center; gap: 8px; }
@@ -43,26 +38,19 @@
   .firm-item.active { background: #059669; color: #fff; box-shadow: 0 4px 10px rgba(5,150,105,0.3); }
   .firm-actions-icon { font-size: 13px; opacity: 0.7; padding: 4px; }
   .firm-actions-icon:hover { opacity: 1; }
-
-  /* Main App Container */
   .main-content { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; position: relative; }
-
-  /* Top Navigation */
   .top-navbar { background: #fff; padding: 12px 18px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .mobile-firm-selector { display: none; }
   .top-title-area { display: flex; align-items: center; gap: 12px; }
   .top-title-area h2 { font-size: 18px; font-weight: 800; color: #0f172a; }
-  .live-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  .live-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
   .live-badge.online { background: #dcfce7; color: #15803d; }
   .live-badge.offline { background: #fee2e2; color: #b91c1c; }
-
   .top-btn-group { display: flex; align-items: center; gap: 8px; }
   .btn-top { padding: 7px 12px; border-radius: 8px; font-size: 13px; font-weight: 700; border: 1px solid var(--border-color); background: #fff; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; color: #334155; }
   .btn-top:hover { background: #f8fafc; border-color: #cbd5e1; }
   .btn-top.btn-excel { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
   .btn-top.btn-backup { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
-
-  /* Grand Totals Dashboard Bar (Kitna Lena Hai & Dena Hai) */
   .totals-dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 14px 18px 6px; background: #fff; }
   .stat-card { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 14px; position: relative; }
   .stat-title { font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; }
@@ -70,21 +58,14 @@
   .stat-lena { color: var(--danger); }
   .stat-dena { color: var(--primary); }
   .stat-net { color: #0284c7; }
-
-  /* Filters & Search */
   .control-strip { padding: 10px 18px; display: flex; gap: 10px; align-items: center; background: #fff; border-bottom: 1px solid var(--border-color); }
   .filter-pills-row { display: flex; gap: 6px; overflow-x: auto; flex: 1; }
   .fpill { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid var(--border-color); background: #fff; color: var(--text-muted); white-space: nowrap; }
   .fpill.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
-  
   .search-input-box { width: 280px; position: relative; }
   .search-input-box input { width: 100%; padding: 8px 12px 8px 34px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 13px; outline: none; background: #f8fafc; }
   .search-input-box i { position: absolute; left: 12px; top: 10px; color: #94a3b8; font-size: 13px; }
-
-  /* Main Workspace Split (Customer List & Ledger Detail) */
   .workspace-split { flex: 1; display: flex; overflow: hidden; background: #f8fafc; position: relative; }
-  
-  /* Customer List Pane */
   .cust-pane { width: 440px; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; background: #fff; height: 100%; overflow-y: auto; padding: 10px 14px 80px; }
   .customer-card-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: #fff; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.15s; }
   .customer-card-item:hover, .customer-card-item.selected { background: #f0fdf4; border-color: #86efac; }
@@ -95,15 +76,10 @@
   .cust-right { text-align: right; }
   .cust-bal-val { font-size: 16px; font-weight: 900; }
   .cust-bal-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; }
-
-  /* Ledger Pane (Desktop Right Pane / Mobile Full Overlay) */
   .ledger-pane { flex: 1; display: flex; flex-direction: column; background: #f8fafc; height: 100%; position: relative; }
   .ledger-empty-msg { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; gap: 12px; }
-
-  /* Ledger Content Header */
   .ledger-top { background: #fff; padding: 12px 18px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
   .ledger-timeline-stream { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
-  
   .stream-date-separator { align-self: center; background: #64748b; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 12px; border-radius: 12px; margin: 6px 0; }
   .bubble-wrap { display: flex; flex-direction: column; }
   .entry-card-bubble { max-width: 80%; padding: 12px 16px; border-radius: 14px; background: #fff; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
@@ -114,8 +90,6 @@
   .bubble-time { font-size: 11px; color: var(--text-muted); }
   .bubble-note { font-size: 13px; color: #334155; margin-top: 5px; line-height: 1.4; }
   .bubble-running { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
-
-  /* Ledger Bottom Action Bar */
   .ledger-bottom-bar { background: #fff; border-top: 1px solid var(--border-color); padding: 12px 18px; display: flex; flex-direction: column; gap: 10px; }
   .quick-comm-row { display: flex; justify-content: space-between; align-items: center; }
   .comm-btn-group { display: flex; gap: 6px; }
@@ -123,43 +97,30 @@
   .comm-call { background: #16a34a; }
   .comm-wa { background: #15803d; }
   .comm-sms { background: #2563eb; }
-
   .pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .btn-pay { padding: 12px; border-radius: 24px; font-size: 15px; font-weight: 900; border: 2px solid; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.15s; }
   .btn-pay-received { background: #fff; color: var(--primary); border-color: var(--primary); }
   .btn-pay-received:hover { background: var(--primary-light); }
   .btn-pay-given { background: #fff; color: var(--danger); border-color: var(--danger); }
   .btn-pay-given:hover { background: var(--danger-light); }
-
-  /* Floating Add Customer Button */
   .fab-add-cust { position: fixed; bottom: 20px; left: 340px; background: #059669; color: #fff; padding: 12px 20px; border-radius: 30px; font-weight: 800; font-size: 14px; border: none; box-shadow: 0 4px 15px rgba(5,150,105,0.4); cursor: pointer; display: flex; align-items: center; gap: 8px; z-index: 50; }
-
-  /* Modals */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.65); z-index: 200; justify-content: center; align-items: center; padding: 14px; }
   .modal-box { background: #fff; border-radius: 18px; width: 100%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); overflow: hidden; animation: popIn 0.2s ease-out; }
   @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
   .modal-head { padding: 14px 18px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
   .modal-body { padding: 16px 18px; max-height: 80vh; overflow-y: auto; }
-
-  /* Inbuilt Calculator & Settings Modal */
   .calc-display-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
   .calc-main-input { flex: 1; font-size: 28px; font-weight: 900; text-align: right; padding: 8px 12px; border: 2px solid var(--border-color); border-radius: 12px; outline: none; background: #f8fafc; }
   .calc-gear-btn { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border-color); background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: #475569; }
-
   .discount-btn-strip { display: flex; gap: 6px; margin-bottom: 10px; }
   .d-btn { flex: 1; padding: 8px 4px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; font-size: 12px; font-weight: 800; color: #1e293b; cursor: pointer; text-align: center; }
   .d-btn:active { background: #e2e8f0; transform: scale(0.96); }
-
   .calc-note-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 14px; margin-bottom: 10px; outline: none; }
-  
   .calc-keys-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
   .ckey { padding: 12px 0; border-radius: 10px; background: #f8fafc; border: 1px solid var(--border-color); font-size: 18px; font-weight: 800; cursor: pointer; text-align: center; color: #0f172a; }
   .ckey.op { background: #eff6ff; color: #1d4ed8; }
   .ckey.save-act { background: #059669; color: #fff; font-weight: 900; }
-
   .msg-toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; font-size: 13px; font-weight: 700; color: #334155; }
-
-  /* Responsive Media Queries */
   @media (max-width: 900px) {
     .firm-sidebar { display: none; }
     .mobile-firm-selector { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; cursor: pointer; }
@@ -173,14 +134,12 @@
     .search-input-box { width: 100%; }
     .control-strip { flex-direction: column; align-items: stretch; }
   }
-
-@media print {
-  body * { visibility: hidden; }
-  #printStatementModal, #printStatementModal * { visibility: visible; }
-  #printStatementModal { position: absolute; left: 0; top: 0; width: 100%; height: auto; background: #fff !important; z-index: 99999; }
-  .no-print { display: none !important; }
-}
-
+  @media print {
+    body * { visibility: hidden; }
+    #printStatementModal, #printStatementModal * { visibility: visible; }
+    #printStatementModal { position: absolute; left: 0; top: 0; width: 100%; height: auto; background: #fff !important; z-index: 99999; }
+    .no-print { display: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -193,9 +152,7 @@
       <button class="btn-top" style="padding:4px 8px; background:#1e293b; color:#38bdf8; border:none;" onclick="openAddFirmModal()" title="Add New Firm / Book"><i class="fa-solid fa-plus"></i></button>
     </div>
     <div style="padding:10px 16px; font-size:11px; font-weight:800; text-transform:uppercase; color:#64748b; letter-spacing:0.5px;">My Books & Firms</div>
-    <div class="firm-list-box" id="firmListSidebar">
-      <!-- Dynamic Firm / Book List -->
-    </div>
+    <div class="firm-list-box" id="firmListSidebar"></div>
     <div style="padding:14px; border-top:1px solid #334155; font-size:12px; color:#94a3b8; display:flex; justify-content:space-between; align-items:center;">
       <span><i class="fa-solid fa-shield-halved"></i> AES Encrypted</span>
       <span id="cloudStatusTxt" style="color:#34d399; font-weight:700;">Live Sync</span>
@@ -207,12 +164,11 @@
     <!-- TOP BAR -->
     <div class="top-navbar">
       <div class="top-title-area">
-        <!-- Mobile book switcher button -->
         <div class="mobile-firm-selector" onclick="openFirmSwitcherModal()">
           <span id="mobileCurrentFirmTitle">SGM Medicals</span> <i class="fa-solid fa-chevron-down" style="font-size:12px;"></i>
         </div>
         <h2 id="currentFirmTitle" style="display:none;">SGM Medicals Gondia</h2>
-        <div id="liveSyncBadge" class="live-badge online" style="cursor:pointer;" onclick="syncToCloud(true)" title="Click to Force Sync Now"><i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync</div>
+        <div id="liveSyncBadge" class="live-badge online" onclick="syncToCloud(true)" title="Click to Force Sync Now"><i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync</div>
       </div>
 
       <div class="top-btn-group">
@@ -232,7 +188,7 @@
       </div>
     </div>
 
-    <!-- GRAND TOTALS DASHBOARD (Kitna Lena Hai & Dena Hai) -->
+    <!-- GRAND TOTALS DASHBOARD -->
     <div class="totals-dashboard">
       <div class="stat-card">
         <div class="stat-title">Kul Lena Hai (Due) <i class="fa-solid fa-arrow-down-left" style="color:var(--danger);"></i></div>
@@ -267,22 +223,16 @@
       </div>
     </div>
 
-    <!-- WORKSPACE SPLIT (CUSTOMER LIST + LEDGER VIEW) -->
+    <!-- WORKSPACE SPLIT -->
     <div class="workspace-split">
-      <!-- CUSTOMER LIST -->
-      <div class="cust-pane" id="customerListContainer">
-        <!-- Rendered dynamically -->
-      </div>
+      <div class="cust-pane" id="customerListContainer"></div>
 
-      <!-- LEDGER VIEW (Right pane desktop / Fullscreen overlay mobile) -->
       <div class="ledger-pane" id="ledgerPane">
-        <!-- Empty Placeholder when no customer selected on desktop -->
         <div class="ledger-empty-msg" id="ledgerEmptyMsg">
           <i class="fa-solid fa-book-open-reader" style="font-size:48px; color:#cbd5e1;"></i>
           <p style="font-size:15px; font-weight:700;">Customer select karein ledger dekhne ke liye</p>
         </div>
 
-        <!-- Real Ledger View Area -->
         <div id="ledgerActiveArea" style="display:none; height:100%; flex-direction:column;">
           <div class="ledger-top">
             <div style="display:flex; align-items:center; gap:12px;">
@@ -308,11 +258,8 @@
             </div>
           </div>
 
-          <div class="ledger-timeline-stream" id="ledgerTimelineStream">
-            <!-- Timeline bubbles -->
-          </div>
+          <div class="ledger-timeline-stream" id="ledgerTimelineStream"></div>
 
-          <!-- Ledger Footer -->
           <div class="ledger-bottom-bar">
             <div class="quick-comm-row">
               <div style="font-size:14px; font-weight:800;">
@@ -326,7 +273,6 @@
               </div>
             </div>
 
-            <!-- Given / Received Buttons -->
             <div class="pay-grid">
               <button class="btn-pay btn-pay-received" onclick="openTransactionModal('RECEIVED')">
                 <i class="fa-solid fa-arrow-down"></i> Payment Received
@@ -355,7 +301,6 @@
       <i class="fa-solid fa-xmark" style="font-size:20px; cursor:pointer;" onclick="closeCalcModal()"></i>
     </div>
     <div class="modal-body">
-      <!-- Calculator Settings Dropdown View -->
       <div id="calcSettingsPanel" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px; margin-bottom:12px;">
         <div style="font-size:12px; font-weight:800; margin-bottom:8px; color:#1e293b;">Calculator Presets:</div>
         <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-bottom:8px;">
@@ -367,7 +312,6 @@
         <button class="btn-top" style="width:100%; justify-content:center; background:#059669; color:#fff; border:none;" onclick="saveCalcSettings()">Save Presets</button>
       </div>
 
-      <!-- Quick Discount Buttons from MRP -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
         <span style="font-size:12px; font-weight:700; color:var(--text-muted);">Quick MRP Discount:</span>
         <span style="font-size:11px; color:#2563eb; font-weight:700; cursor:pointer;" onclick="toggleCalcSettings()"><i class="fa-solid fa-gear"></i> Settings</span>
@@ -379,15 +323,12 @@
         <button class="d-btn" id="lblD4" onclick="applyQuickDiscount(4)">-10%</button>
       </div>
 
-      <!-- Main Input Display -->
       <div class="calc-display-wrap">
         <input type="text" class="calc-main-input" id="calcMainDisplay" value="0" readonly>
       </div>
 
-      <!-- Note / Bill Items -->
       <input type="text" class="calc-note-input" id="calcEntryNote" placeholder="Note / Medicine Item details...">
 
-      <!-- Message Alert Toggles -->
       <div class="msg-toggle-row">
         <span><i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> WhatsApp Alert Link</span>
         <input type="checkbox" id="chkWhatsAppAlert" checked>
@@ -397,7 +338,6 @@
         <input type="checkbox" id="chkSMSAlert">
       </div>
 
-      <!-- Keypad -->
       <div class="calc-keys-grid">
         <div class="ckey op" onclick="pressCalcKey('C')">C</div>
         <div class="ckey op" onclick="pressCalcKey('/')">÷</div>
@@ -489,7 +429,6 @@
   </div>
 </div>
 
-
 <!-- ================= INDIVIDUAL CUSTOMER LEDGER STATEMENT MODAL ================= -->
 <div class="modal-overlay" id="printStatementModal">
   <div class="modal-box" style="max-width:700px;">
@@ -500,14 +439,11 @@
         <button class="btn-top" onclick="closePrintStatementModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
-    <div class="modal-body" id="printStatementBody" style="padding:20px; font-size:13px; color:#1e293b;">
-      <!-- Dynamic Statement Content -->
-    </div>
+    <div class="modal-body" id="printStatementBody" style="padding:20px; font-size:13px; color:#1e293b;"></div>
   </div>
 </div>
 
-
-<!-- ================= OKCREDIT STYLE SORT & FILTER MODAL (IMAGE 2) ================= -->
+<!-- ================= OKCREDIT STYLE SORT & FILTER MODAL ================= -->
 <div class="modal-overlay" id="filterModal">
   <div class="modal-box" style="max-width:420px; border-radius:20px 20px 0 0; margin-top:auto; margin-bottom:0;">
     <div class="modal-head" style="border-bottom:1px solid var(--border-color);">
@@ -515,7 +451,6 @@
       <i class="fa-solid fa-xmark" style="font-size:20px; cursor:pointer;" onclick="closeFilterModal()"></i>
     </div>
     <div style="display:flex; min-height:240px; border-bottom:1px solid var(--border-color);">
-      <!-- Left Tabs -->
       <div style="width:130px; border-right:1px solid var(--border-color); background:#f8fafc; display:flex; flex-direction:column;">
         <div id="filterTabSort" onclick="switchFilterTab('sort')" style="padding:14px 12px; font-size:13px; font-weight:800; color:var(--primary); border-left:4px solid var(--primary); background:#fff; cursor:pointer;">
           Sort By
@@ -524,7 +459,6 @@
           Reminder Date
         </div>
       </div>
-      <!-- Right Options -->
       <div style="flex:1; padding:12px 16px; overflow-y:auto;">
         <div id="filterPanelSort">
           <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
@@ -564,7 +498,6 @@
         </div>
       </div>
     </div>
-    <!-- Bottom Buttons: Clear & Apply -->
     <div style="display:flex; gap:12px; padding:14px 16px;">
       <button class="btn-top" style="flex:1; justify-content:center; border-radius:24px; padding:10px; font-weight:800;" onclick="clearSortFilters()">Clear</button>
       <button class="btn-top" style="flex:1; justify-content:center; border-radius:24px; padding:10px; font-weight:800; background:var(--primary); color:#fff; border:none;" onclick="applySortFilters()">Apply</button>
@@ -572,7 +505,7 @@
   </div>
 </div>
 
-<!-- ================= DYNAMIC UPI QR CODE COLLECTION MODAL (IMAGE 1) ================= -->
+<!-- ================= DYNAMIC UPI QR CODE COLLECTION MODAL ================= -->
 <div class="modal-overlay" id="qrCollectionModal">
   <div class="modal-box" style="max-width:440px; border-radius:20px; overflow:hidden;">
     <div class="modal-head" style="background:#fff;">
@@ -583,7 +516,6 @@
       <i class="fa-solid fa-xmark" style="font-size:20px; cursor:pointer;" onclick="closeQrCollectionModal()"></i>
     </div>
     <div class="modal-body" style="padding:14px 16px; background:#f8fafc;">
-      <!-- Customer Info Strip -->
       <div style="display:flex; align-items:center; justify-content:space-between; background:#fff; padding:10px 14px; border-radius:12px; border:1px solid var(--border-color); margin-bottom:12px;">
         <div style="display:flex; align-items:center; gap:10px;">
           <div class="cust-avatar-circle" id="qrCustAvatar" style="width:36px; height:36px; font-size:14px; background:#059669;">D</div>
@@ -598,29 +530,24 @@
         </div>
       </div>
 
-      <!-- Main White QR Card -->
       <div style="background:#fff; border-radius:16px; border:1px solid var(--border-color); padding:16px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
         <div style="font-size:12px; font-weight:700; color:var(--text-muted); margin-bottom:4px;">Payment Due Reminder!</div>
         
-        <!-- Editable Custom Amount -->
         <div style="display:flex; align-items:center; justify-content:center; gap:4px; margin-bottom:12px;">
           <span style="font-size:22px; font-weight:900; color:#0f172a;">₹</span>
           <input type="number" id="qrCustomAmount" style="font-size:24px; font-weight:900; color:#0f172a; width:130px; border:none; border-bottom:2px dashed var(--primary); text-align:center; outline:none; background:transparent;" oninput="regenerateQrCode()" placeholder="0">
         </div>
 
-        <!-- QR Code Canvas / Box -->
         <div style="display:flex; justify-content:center; align-items:center; min-height:190px; margin-bottom:10px;">
           <div id="qrCodeContainer" style="padding:10px; background:#fff; border:1px solid #e2e8f0; border-radius:12px;"></div>
         </div>
 
-        <!-- Shop Name & Editable UPI ID -->
         <div style="font-size:12px; font-weight:800; color:#1e293b;" id="qrShopName">Shree Ganesh Medicals</div>
         <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:4px;">
           <span style="font-size:11px; color:var(--text-muted);">UPI ID:</span>
           <input type="text" id="qrUpiIdInput" style="font-size:11px; font-weight:700; color:#2563eb; border:1px solid #cbd5e1; border-radius:6px; padding:2px 8px; text-align:center; width:160px; outline:none;" value="sgm144@ptyces" oninput="regenerateQrCode()">
         </div>
 
-        <!-- Supported UPI Logos Indicator -->
         <div style="display:flex; justify-content:center; align-items:center; gap:16px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0; font-size:11px; font-weight:700; color:#475569;">
           <span><i class="fa-brands fa-google-pay" style="font-size:18px; color:#4285f4;"></i> GPay</span>
           <span><i class="fa-solid fa-mobile-screen" style="font-size:14px; color:#6739b7;"></i> PhonePe</span>
@@ -629,7 +556,6 @@
         </div>
       </div>
 
-      <!-- Quick Action Buttons on QR View -->
       <div style="display:flex; gap:8px; margin-top:12px;">
         <button class="btn-top" style="flex:1; justify-content:center; border-radius:24px; padding:8px 12px; font-size:12px;" onclick="callCustomer()"><i class="fa-solid fa-phone"></i> Call</button>
         <button class="btn-top" style="flex:1; justify-content:center; border-radius:24px; padding:8px 12px; font-size:12px; background:#ecfdf5; color:#065f46; border-color:#a7f3d0;" onclick="sendQrWhatsApp()"><i class="fa-brands fa-whatsapp"></i> Send WhatsApp</button>
@@ -638,7 +564,7 @@
   </div>
 </div>
 
-<!-- ================= CLOUD SYNC & ENCRYPTION CONFIG MODAL ================= -->
+<!-- ================= CLOUD CONFIG MODAL ================= -->
 <div class="modal-overlay" id="cloudConfigModal">
   <div class="modal-box">
     <div class="modal-head">
@@ -648,7 +574,7 @@
     <div class="modal-body">
       <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.5;">
         <b>Connected to Firebase:</b> <code>sgm-hisaab-kitaab-ledger</code><br>
-        <b>100% Zero-Knowledge AES-256 Encryption:</b> Aapka data cloud me save hone se pehle is secret key se encrypt hota hai. Kisi ke paas Firebase ka access bhi ho tab bhi bina is password ke wo hisaab nahi dekh sakta.
+        <b>100% Zero-Knowledge AES-256 Encryption:</b> Aapka data cloud me save hone se pehle is secret key se encrypt hota hai.
       </div>
       <div style="margin-bottom:12px;">
         <label style="font-size:12px; font-weight:700;">Encryption Secret Key (Aapka Password) *</label>
@@ -665,7 +591,6 @@
 
 <script>
 // ================= DATA STRUCTURE =================
-
 const PRELOADED_CUSTOMERS = {"cust_1000": {"id": "cust_1000", "name": "Abhishek Mukta..", "phone": "8668846525", "balance": "120.00", "transactions": [{"id": "tx_init_1000", "type": "GIVEN", "amount": 120.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1000}], "updatedAt": 1000}, "cust_1001": {"id": "cust_1001", "name": "Abhishek Sir", "phone": "7499852429", "balance": "9423.10", "transactions": [{"id": "tx_init_1001", "type": "GIVEN", "amount": 9423.1, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1001}], "updatedAt": 1001}, "cust_1002": {"id": "cust_1002", "name": "Airtel Payment Bank ID Gulab", "phone": "9673393819", "balance": "5390.00", "transactions": [{"id": "tx_init_1002", "type": "GIVEN", "amount": 5390.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1002}], "updatedAt": 1002}, "cust_1003": {"id": "cust_1003", "name": "Akki Raipur", "phone": "", "balance": "-70.00", "transactions": [{"id": "tx_init_1003", "type": "RECEIVED", "amount": 70.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1003}], "updatedAt": 1003}, "cust_1004": {"id": "cust_1004", "name": "Ambar Bhiya A/C On and After 25 Sept 2025", "phone": "", "balance": "7148.34", "transactions": [{"id": "tx_init_1004", "type": "GIVEN", "amount": 7148.34, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1004}], "updatedAt": 1004}, "cust_1005": {"id": "cust_1005", "name": "Ambar Bhiya Vyaazi Services", "phone": "8208221201", "balance": "-100056.00", "transactions": [{"id": "tx_init_1005", "type": "RECEIVED", "amount": 100056.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1005}], "updatedAt": 1005}, "cust_1006": {"id": "cust_1006", "name": "Anil Samrat", "phone": "9422130771", "balance": "40.00", "transactions": [{"id": "tx_init_1006", "type": "GIVEN", "amount": 40.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1006}], "updatedAt": 1006}, "cust_1007": {"id": "cust_1007", "name": "Ankur K", "phone": "8421381518", "balance": "0.10", "transactions": [{"id": "tx_init_1007", "type": "GIVEN", "amount": 0.1, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1007}], "updatedAt": 1007}, "cust_1008": {"id": "cust_1008", "name": "APPU BHIYA", "phone": "", "balance": "2053.00", "transactions": [{"id": "tx_init_1008", "type": "GIVEN", "amount": 2053.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1008}], "updatedAt": 1008}, "cust_1009": {"id": "cust_1009", "name": "Archit Bhiya", "phone": "9021022230", "balance": "43650.00", "transactions": [{"id": "tx_init_1009", "type": "GIVEN", "amount": 43650.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1009}], "updatedAt": 1009}, "cust_1010": {"id": "cust_1010", "name": "Ashwin Chitar", "phone": "9423115116", "balance": "-1883.00", "transactions": [{"id": "tx_init_1010", "type": "RECEIVED", "amount": 1883.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1010}], "updatedAt": 1010}, "cust_1011": {"id": "cust_1011", "name": "Aunty Cm20", "phone": "7498033919", "balance": "857.00", "transactions": [{"id": "tx_init_1011", "type": "GIVEN", "amount": 857.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1011}], "updatedAt": 1011}, "cust_1012": {"id": "cust_1012", "name": "Avi CM20", "phone": "8421502241", "balance": "550.00", "transactions": [{"id": "tx_init_1012", "type": "GIVEN", "amount": 550.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1012}], "updatedAt": 1012}, "cust_1013": {"id": "cust_1013", "name": "Ayush J.", "phone": "7775013468", "balance": "-2.00", "transactions": [{"id": "tx_init_1013", "type": "RECEIVED", "amount": 2.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1013}], "updatedAt": 1013}, "cust_1014": {"id": "cust_1014", "name": "Badi Bua Ji", "phone": "", "balance": "3060.00", "transactions": [{"id": "tx_init_1014", "type": "GIVEN", "amount": 3060.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1014}], "updatedAt": 1014}, "cust_1015": {"id": "cust_1015", "name": "BANDU DESHKAR", "phone": "8788207875", "balance": "20.00", "transactions": [{"id": "tx_init_1015", "type": "GIVEN", "amount": 20.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1015}], "updatedAt": 1015}, "cust_1016": {"id": "cust_1016", "name": "Bhavesh Sharma😎", "phone": "9764776119", "balance": "239.00", "transactions": [{"id": "tx_init_1016", "type": "GIVEN", "amount": 239.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1016}], "updatedAt": 1016}, "cust_1017": {"id": "cust_1017", "name": "Brx Bhumesh L.", "phone": "9637084366", "balance": "50.00", "transactions": [{"id": "tx_init_1017", "type": "GIVEN", "amount": 50.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1017}], "updatedAt": 1017}, "cust_1018": {"id": "cust_1018", "name": "Brx Mahima Asati", "phone": "", "balance": "2600.00", "transactions": [{"id": "tx_init_1018", "type": "GIVEN", "amount": 2600.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1018}], "updatedAt": 1018}, "cust_1019": {"id": "cust_1019", "name": "Brx Mukul B.", "phone": "8806904276", "balance": "1840.00", "transactions": [{"id": "tx_init_1019", "type": "GIVEN", "amount": 1840.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1019}], "updatedAt": 1019}, "cust_1020": {"id": "cust_1020", "name": "Brx Rishabh A.", "phone": "9403097934", "balance": "200.00", "transactions": [{"id": "tx_init_1020", "type": "GIVEN", "amount": 200.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1020}], "updatedAt": 1020}, "cust_1021": {"id": "cust_1021", "name": "Brx Sameer U", "phone": "9765454382", "balance": "-40.00", "transactions": [{"id": "tx_init_1021", "type": "RECEIVED", "amount": 40.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1021}], "updatedAt": 1021}, "cust_1022": {"id": "cust_1022", "name": "Brx Sampada S.", "phone": "8551092245", "balance": "175.00", "transactions": [{"id": "tx_init_1022", "type": "GIVEN", "amount": 175.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1022}], "updatedAt": 1022}, "cust_1023": {"id": "cust_1023", "name": "Brx Shubham B..", "phone": "8265057191", "balance": "3008.00", "transactions": [{"id": "tx_init_1023", "type": "GIVEN", "amount": 3008.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1023}], "updatedAt": 1023}, "cust_1024": {"id": "cust_1024", "name": "Brx. Sushant K.", "phone": "9049964800", "balance": "40.00", "transactions": [{"id": "tx_init_1024", "type": "GIVEN", "amount": 40.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1024}], "updatedAt": 1024}, "cust_1025": {"id": "cust_1025", "name": "Brx3 Prashant P.", "phone": "9168134239", "balance": "11.00", "transactions": [{"id": "tx_init_1025", "type": "GIVEN", "amount": 11.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1025}], "updatedAt": 1025}, "cust_1026": {"id": "cust_1026", "name": "Chaitanya K.", "phone": "9325890121", "balance": "-9507.57", "transactions": [{"id": "tx_init_1026", "type": "RECEIVED", "amount": 9507.57, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1026}], "updatedAt": 1026}, "cust_1027": {"id": "cust_1027", "name": "Chillar Jay Bhagwani", "phone": "9370243306", "balance": "500.00", "transactions": [{"id": "tx_init_1027", "type": "GIVEN", "amount": 500.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1027}], "updatedAt": 1027}, "cust_1028": {"id": "cust_1028", "name": "Chote Taoji", "phone": "9421810236", "balance": "4325.00", "transactions": [{"id": "tx_init_1028", "type": "GIVEN", "amount": 4325.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1028}], "updatedAt": 1028}, "cust_1029": {"id": "cust_1029", "name": "Deep Cash Len Den Hisaab Working", "phone": "", "balance": "-54000.00", "transactions": [{"id": "tx_init_1029", "type": "RECEIVED", "amount": 54000.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1029}], "updatedAt": 1029}, "cust_1030": {"id": "cust_1030", "name": "Deep Chawda", "phone": "8788551950", "balance": "1135.00", "transactions": [{"id": "tx_init_1030", "type": "GIVEN", "amount": 1135.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1030}], "updatedAt": 1030}, "cust_1031": {"id": "cust_1031", "name": "Deep Chawda Cash Den Hisaab Personal", "phone": "8605380615", "balance": "-23000.00", "transactions": [{"id": "tx_init_1031", "type": "RECEIVED", "amount": 23000.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1031}], "updatedAt": 1031}, "cust_1032": {"id": "cust_1032", "name": "Deepak M.", "phone": "9372111301", "balance": "2027.00", "transactions": [{"id": "tx_init_1032", "type": "GIVEN", "amount": 2027.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1032}], "updatedAt": 1032}, "cust_1033": {"id": "cust_1033", "name": "Delhivery Kapil Bhiya", "phone": "", "balance": "-1237.00", "transactions": [{"id": "tx_init_1033", "type": "RECEIVED", "amount": 1237.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1033}], "updatedAt": 1033}, "cust_1034": {"id": "cust_1034", "name": "Dishant K.", "phone": "9039601514", "balance": "400.00", "transactions": [{"id": "tx_init_1034", "type": "GIVEN", "amount": 400.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1034}], "updatedAt": 1034}, "cust_1035": {"id": "cust_1035", "name": "E Gaurav Khobragade", "phone": "9370503463", "balance": "500.00", "transactions": [{"id": "tx_init_1035", "type": "GIVEN", "amount": 500.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1035}], "updatedAt": 1035}, "cust_1036": {"id": "cust_1036", "name": "E Manish Wasnik", "phone": "8698268180", "balance": "530.00", "transactions": [{"id": "tx_init_1036", "type": "GIVEN", "amount": 530.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1036}], "updatedAt": 1036}, "cust_1037": {"id": "cust_1037", "name": "Gaurav P.", "phone": "8806491862", "balance": "19816.00", "transactions": [{"id": "tx_init_1037", "type": "GIVEN", "amount": 19816.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1037}], "updatedAt": 1037}, "cust_1038": {"id": "cust_1038", "name": "GDCDA My InOut", "phone": "", "balance": "419.00", "transactions": [{"id": "tx_init_1038", "type": "GIVEN", "amount": 419.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1038}], "updatedAt": 1038}, "cust_1039": {"id": "cust_1039", "name": "Goldi Agrawal", "phone": "9595833830", "balance": "-24944.25", "transactions": [{"id": "tx_init_1039", "type": "RECEIVED", "amount": 24944.25, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1039}], "updatedAt": 1039}, "cust_1040": {"id": "cust_1040", "name": "Gourav K", "phone": "8806273732", "balance": "10778.50", "transactions": [{"id": "tx_init_1040", "type": "GIVEN", "amount": 10778.5, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1040}], "updatedAt": 1040}, "cust_1041": {"id": "cust_1041", "name": "Guddu Bhiya..", "phone": "7972748016", "balance": "1560.00", "transactions": [{"id": "tx_init_1041", "type": "GIVEN", "amount": 1560.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1041}], "updatedAt": 1041}, "cust_1042": {"id": "cust_1042", "name": "Guddu Pooja Bhabhi", "phone": "7020435040", "balance": "500.00", "transactions": [{"id": "tx_init_1042", "type": "GIVEN", "amount": 500.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1042}], "updatedAt": 1042}, "cust_1043": {"id": "cust_1043", "name": "HopsVedic", "phone": "", "balance": "2262.00", "transactions": [{"id": "tx_init_1043", "type": "GIVEN", "amount": 2262.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1043}], "updatedAt": 1043}, "cust_1044": {"id": "cust_1044", "name": "HT. Rohit Badole", "phone": "9764893662", "balance": "40.00", "transactions": [{"id": "tx_init_1044", "type": "GIVEN", "amount": 40.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1044}], "updatedAt": 1044}, "cust_1045": {"id": "cust_1045", "name": "Irctc E Wallet Amit Pandey", "phone": "", "balance": "214.18", "transactions": [{"id": "tx_init_1045", "type": "GIVEN", "amount": 214.18, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1045}], "updatedAt": 1045}, "cust_1046": {"id": "cust_1046", "name": "Irctc E Wallet Avi Cm20", "phone": "", "balance": "98.10", "transactions": [{"id": "tx_init_1046", "type": "GIVEN", "amount": 98.1, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1046}], "updatedAt": 1046}, "cust_1047": {"id": "cust_1047", "name": "Jhanita Mam", "phone": "8007887550", "balance": "2348.30", "transactions": [{"id": "tx_init_1047", "type": "GIVEN", "amount": 2348.3, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1047}], "updatedAt": 1047}, "cust_1048": {"id": "cust_1048", "name": "Jyotsna MausiJi", "phone": "9826582777", "balance": "-183.00", "transactions": [{"id": "tx_init_1048", "type": "RECEIVED", "amount": 183.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1048}], "updatedAt": 1048}, "cust_1049": {"id": "cust_1049", "name": "Krishna Tambi Cafe", "phone": "9503616150", "balance": "150.00", "transactions": [{"id": "tx_init_1049", "type": "GIVEN", "amount": 150.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1049}], "updatedAt": 1049}, "cust_1050": {"id": "cust_1050", "name": "M Ashok Mohan Mukta", "phone": "8180022114", "balance": "43.00", "transactions": [{"id": "tx_init_1050", "type": "GIVEN", "amount": 43.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1050}], "updatedAt": 1050}, "cust_1051": {"id": "cust_1051", "name": "M Om Kamal Bhiya", "phone": "9371594510", "balance": "200.00", "transactions": [{"id": "tx_init_1051", "type": "GIVEN", "amount": 200.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1051}], "updatedAt": 1051}, "cust_1052": {"id": "cust_1052", "name": "M Pandeys Pet World Amit Pandey", "phone": "9579727421", "balance": "803.70", "transactions": [{"id": "tx_init_1052", "type": "GIVEN", "amount": 803.7, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1052}], "updatedAt": 1052}, "cust_1053": {"id": "cust_1053", "name": "Mahesh Tathagat", "phone": "9130861289", "balance": "-75.00", "transactions": [{"id": "tx_init_1053", "type": "RECEIVED", "amount": 75.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1053}], "updatedAt": 1053}, "cust_1054": {"id": "cust_1054", "name": "Mannu Bhiya", "phone": "8888713366", "balance": "-3870.50", "transactions": [{"id": "tx_init_1054", "type": "RECEIVED", "amount": 3870.5, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1054}], "updatedAt": 1054}, "cust_1055": {"id": "cust_1055", "name": "Minal Bhaiya Archit Dost", "phone": "9579010045", "balance": "10698.00", "transactions": [{"id": "tx_init_1055", "type": "GIVEN", "amount": 10698.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1055}], "updatedAt": 1055}, "cust_1056": {"id": "cust_1056", "name": "Mohan A.", "phone": "8698439792", "balance": "555.00", "transactions": [{"id": "tx_init_1056", "type": "GIVEN", "amount": 555.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1056}], "updatedAt": 1056}, "cust_1057": {"id": "cust_1057", "name": "Mohit B.", "phone": "7030636769", "balance": "-9.00", "transactions": [{"id": "tx_init_1057", "type": "RECEIVED", "amount": 9.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1057}], "updatedAt": 1057}, "cust_1058": {"id": "cust_1058", "name": "Monu Mannu Dhule", "phone": "7719086616", "balance": "200.00", "transactions": [{"id": "tx_init_1058", "type": "GIVEN", "amount": 200.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1058}], "updatedAt": 1058}, "cust_1059": {"id": "cust_1059", "name": "MR Zandu OTC Satyam", "phone": "9158706352", "balance": "26160.50", "transactions": [{"id": "tx_init_1059", "type": "GIVEN", "amount": 26160.5, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1059}], "updatedAt": 1059}, "cust_1060": {"id": "cust_1060", "name": "Navjot Mundra", "phone": "6396781238", "balance": "30.00", "transactions": [{"id": "tx_init_1060", "type": "GIVEN", "amount": 30.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1060}], "updatedAt": 1060}, "cust_1061": {"id": "cust_1061", "name": "NYBB", "phone": "7030407717", "balance": "804.00", "transactions": [{"id": "tx_init_1061", "type": "GIVEN", "amount": 804.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1061}], "updatedAt": 1061}, "cust_1062": {"id": "cust_1062", "name": "PAPPU CHACHA", "phone": "", "balance": "2245.00", "transactions": [{"id": "tx_init_1062", "type": "GIVEN", "amount": 2245.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1062}], "updatedAt": 1062}, "cust_1063": {"id": "cust_1063", "name": "PARESH BHGDEV", "phone": "9423415336", "balance": "1995.00", "transactions": [{"id": "tx_init_1063", "type": "GIVEN", "amount": 1995.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1063}], "updatedAt": 1063}, "cust_1064": {"id": "cust_1064", "name": "Parth Barai Vod", "phone": "8390964767", "balance": "479.00", "transactions": [{"id": "tx_init_1064", "type": "GIVEN", "amount": 479.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1064}], "updatedAt": 1064}, "cust_1065": {"id": "cust_1065", "name": "PAYTM KUSHAL BHIYA SINGH", "phone": "", "balance": "3100.00", "transactions": [{"id": "tx_init_1065", "type": "GIVEN", "amount": 3100.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1065}], "updatedAt": 1065}, "cust_1066": {"id": "cust_1066", "name": "PB Sir", "phone": "", "balance": "175.00", "transactions": [{"id": "tx_init_1066", "type": "GIVEN", "amount": 175.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1066}], "updatedAt": 1066}, "cust_1067": {"id": "cust_1067", "name": "Pradeep Mamaji AIG Hisaab", "phone": "", "balance": "-5001.00", "transactions": [{"id": "tx_init_1067", "type": "RECEIVED", "amount": 5001.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1067}], "updatedAt": 1067}, "cust_1068": {"id": "cust_1068", "name": "Prfsstn C.", "phone": "8390644964", "balance": "-70.00", "transactions": [{"id": "tx_init_1068", "type": "RECEIVED", "amount": 70.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1068}], "updatedAt": 1068}, "cust_1069": {"id": "cust_1069", "name": "Raghav K.", "phone": "8830823772", "balance": "-449.20", "transactions": [{"id": "tx_init_1069", "type": "RECEIVED", "amount": 449.2, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1069}], "updatedAt": 1069}, "cust_1070": {"id": "cust_1070", "name": "Raj Saloon", "phone": "8308634620", "balance": "239.00", "transactions": [{"id": "tx_init_1070", "type": "GIVEN", "amount": 239.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1070}], "updatedAt": 1070}, "cust_1071": {"id": "cust_1071", "name": "Raju Uncle Dixit", "phone": "8668954123", "balance": "12558.00", "transactions": [{"id": "tx_init_1071", "type": "GIVEN", "amount": 12558.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1071}], "updatedAt": 1071}, "cust_1072": {"id": "cust_1072", "name": "Rc. Uddesh J.", "phone": "7276851603", "balance": "-50.00", "transactions": [{"id": "tx_init_1072", "type": "RECEIVED", "amount": 50.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1072}], "updatedAt": 1072}, "cust_1073": {"id": "cust_1073", "name": "Sarang T.", "phone": "8888411466", "balance": "-136.00", "transactions": [{"id": "tx_init_1073", "type": "RECEIVED", "amount": 136.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1073}], "updatedAt": 1073}, "cust_1074": {"id": "cust_1074", "name": "send courier didi", "phone": "9309193771", "balance": "220.00", "transactions": [{"id": "tx_init_1074", "type": "GIVEN", "amount": 220.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1074}], "updatedAt": 1074}, "cust_1075": {"id": "cust_1075", "name": "SGM Avinash Rathod KTS", "phone": "", "balance": "1870.00", "transactions": [{"id": "tx_init_1075", "type": "GIVEN", "amount": 1870.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1075}], "updatedAt": 1075}, "cust_1076": {"id": "cust_1076", "name": "SGM Gurbeer Bhatia Ji", "phone": "8830115700", "balance": "-1.00", "transactions": [{"id": "tx_init_1076", "type": "RECEIVED", "amount": 1.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1076}], "updatedAt": 1076}, "cust_1077": {"id": "cust_1077", "name": "SGM Harsh Agrawal", "phone": "7822032117", "balance": "872.00", "transactions": [{"id": "tx_init_1077", "type": "GIVEN", "amount": 872.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1077}], "updatedAt": 1077}, "cust_1078": {"id": "cust_1078", "name": "SGM Ravi Bhiya Khamari", "phone": "9309104887", "balance": "3705.00", "transactions": [{"id": "tx_init_1078", "type": "GIVEN", "amount": 3705.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1078}], "updatedAt": 1078}, "cust_1079": {"id": "cust_1079", "name": "SGM RIYAN MIRZA", "phone": "9607806432", "balance": "440.00", "transactions": [{"id": "tx_init_1079", "type": "GIVEN", "amount": 440.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1079}], "updatedAt": 1079}, "cust_1080": {"id": "cust_1080", "name": "SGM Rohit Yadav Bhiya", "phone": "", "balance": "70.00", "transactions": [{"id": "tx_init_1080", "type": "GIVEN", "amount": 70.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1080}], "updatedAt": 1080}, "cust_1081": {"id": "cust_1081", "name": "SGM SANDHYA SRIVASTAV JI", "phone": "9325722592", "balance": "1200.00", "transactions": [{"id": "tx_init_1081", "type": "GIVEN", "amount": 1200.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1081}], "updatedAt": 1081}, "cust_1082": {"id": "cust_1082", "name": "SGM SANKET BANTE", "phone": "8275290931", "balance": "998.00", "transactions": [{"id": "tx_init_1082", "type": "GIVEN", "amount": 998.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1082}], "updatedAt": 1082}, "cust_1083": {"id": "cust_1083", "name": "SGM Srinivas Uncle", "phone": "9960154887", "balance": "8390.00", "transactions": [{"id": "tx_init_1083", "type": "GIVEN", "amount": 8390.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1083}], "updatedAt": 1083}, "cust_1084": {"id": "cust_1084", "name": "SGM Suchita A.", "phone": "7248927744", "balance": "100.00", "transactions": [{"id": "tx_init_1084", "type": "GIVEN", "amount": 100.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1084}], "updatedAt": 1084}, "cust_1085": {"id": "cust_1085", "name": "SGM Udit Agrawal", "phone": "9021411019", "balance": "15.00", "transactions": [{"id": "tx_init_1085", "type": "GIVEN", "amount": 15.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1085}], "updatedAt": 1085}, "cust_1086": {"id": "cust_1086", "name": "Shakti Bua", "phone": "", "balance": "4617.00", "transactions": [{"id": "tx_init_1086", "type": "GIVEN", "amount": 4617.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1086}], "updatedAt": 1086}, "cust_1087": {"id": "cust_1087", "name": "Sharma Sir", "phone": "7741966110", "balance": "60.00", "transactions": [{"id": "tx_init_1087", "type": "GIVEN", "amount": 60.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1087}], "updatedAt": 1087}, "cust_1088": {"id": "cust_1088", "name": "Shubham P final", "phone": "", "balance": "2879.30", "transactions": [{"id": "tx_init_1088", "type": "GIVEN", "amount": 2879.3, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1088}], "updatedAt": 1088}, "cust_1089": {"id": "cust_1089", "name": "Soham J", "phone": "9970074607", "balance": "-1.00", "transactions": [{"id": "tx_init_1089", "type": "RECEIVED", "amount": 1.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1089}], "updatedAt": 1089}, "cust_1090": {"id": "cust_1090", "name": "Sourabh Bhiya Ca Agrawal Medicos", "phone": "8793788489", "balance": "100.00", "transactions": [{"id": "tx_init_1090", "type": "GIVEN", "amount": 100.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1090}], "updatedAt": 1090}, "cust_1091": {"id": "cust_1091", "name": "Subodh Khande", "phone": "9028327219", "balance": "100.00", "transactions": [{"id": "tx_init_1091", "type": "GIVEN", "amount": 100.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1091}], "updatedAt": 1091}, "cust_1092": {"id": "cust_1092", "name": "Sumedh D.", "phone": "8483862765", "balance": "564.00", "transactions": [{"id": "tx_init_1092", "type": "GIVEN", "amount": 564.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1092}], "updatedAt": 1092}, "cust_1093": {"id": "cust_1093", "name": "Sumit B.", "phone": "8381020013", "balance": "194.00", "transactions": [{"id": "tx_init_1093", "type": "GIVEN", "amount": 194.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1093}], "updatedAt": 1093}, "cust_1094": {"id": "cust_1094", "name": "Sunny R", "phone": "", "balance": "10.00", "transactions": [{"id": "tx_init_1094", "type": "GIVEN", "amount": 10.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1094}], "updatedAt": 1094}, "cust_1095": {"id": "cust_1095", "name": "Tanishk S.", "phone": "9595573942", "balance": "-37.00", "transactions": [{"id": "tx_init_1095", "type": "RECEIVED", "amount": 37.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1095}], "updatedAt": 1095}, "cust_1096": {"id": "cust_1096", "name": "Tanuj Wanjari Bhiya", "phone": "8806160888", "balance": "1080.00", "transactions": [{"id": "tx_init_1096", "type": "GIVEN", "amount": 1080.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1096}], "updatedAt": 1096}, "cust_1097": {"id": "cust_1097", "name": "Tousif R. Defaulter", "phone": "7507069610", "balance": "650.00", "transactions": [{"id": "tx_init_1097", "type": "GIVEN", "amount": 650.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1097}], "updatedAt": 1097}, "cust_1098": {"id": "cust_1098", "name": "Tushar C.", "phone": "9881227998", "balance": "1578.00", "transactions": [{"id": "tx_init_1098", "type": "GIVEN", "amount": 1578.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1098}], "updatedAt": 1098}, "cust_1099": {"id": "cust_1099", "name": "Vardhman Pharma Distributors", "phone": "", "balance": "147.00", "transactions": [{"id": "tx_init_1099", "type": "GIVEN", "amount": 147.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1099}], "updatedAt": 1099}, "cust_1100": {"id": "cust_1100", "name": "Vestige Rahul", "phone": "7773910806", "balance": "2.00", "transactions": [{"id": "tx_init_1100", "type": "GIVEN", "amount": 2.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1100}], "updatedAt": 1100}, "cust_1101": {"id": "cust_1101", "name": "VI Paise Dalna Narendra bhiya", "phone": "8669951776", "balance": "370.00", "transactions": [{"id": "tx_init_1101", "type": "GIVEN", "amount": 370.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1101}], "updatedAt": 1101}, "cust_1102": {"id": "cust_1102", "name": "Vilas Anil Samrat", "phone": "", "balance": "578.00", "transactions": [{"id": "tx_init_1102", "type": "GIVEN", "amount": 578.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1102}], "updatedAt": 1102}, "cust_1103": {"id": "cust_1103", "name": "Vishal B.", "phone": "8180895296", "balance": "1000.00", "transactions": [{"id": "tx_init_1103", "type": "GIVEN", "amount": 1000.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1103}], "updatedAt": 1103}, "cust_1104": {"id": "cust_1104", "name": "Yash Sharma", "phone": "", "balance": "50.00", "transactions": [{"id": "tx_init_1104", "type": "GIVEN", "amount": 50.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1104}], "updatedAt": 1104}, "cust_1105": {"id": "cust_1105", "name": "Yasin", "phone": "", "balance": "70.00", "transactions": [{"id": "tx_init_1105", "type": "GIVEN", "amount": 70.0, "note": "Restored Balance from OkCredit Backup", "dateStr": "18 Sept 2026", "timeStr": "11:25 PM", "timestamp": 1105}], "updatedAt": 1105}};
 
 const DEFAULT_FIRM_ID = 'firm_default';
@@ -693,6 +618,8 @@ let Store = {
   }
 };
 
+let activeSortOption = 'default';
+let activeRemindOption = 'all';
 let currentFilter = 'all';
 let selectedCustomerId = null;
 let currentTxType = 'GIVEN';
@@ -711,6 +638,8 @@ window.onload = function() {
   renderCustomerList();
   calculateGrandTotals();
   applyCalcPresetsUI();
+  // Automatic dual-sync REST fetch on load
+  forceCloudFetch(false);
 };
 
 function loadFromLocalStorage() {
@@ -758,27 +687,10 @@ function initCloudSync() {
     }
     fbDatabaseRef = firebase.database().ref('sgm_multi_firm_store');
 
-    // Real-time listener for incoming changes from web or app
     fbDatabaseRef.on('value', (snap) => {
       const encrypted = snap.val();
       if (encrypted) {
-        const decrypted = decryptPayload(encrypted, Store.secretKey);
-        if (decrypted) {
-          const remoteStore = JSON.parse(decrypted);
-          if (remoteStore.firms) {
-            Store.firms = remoteStore.firms;
-            if (remoteStore.lastActiveFirmId && Store.firms[remoteStore.lastActiveFirmId]) {
-              Store.activeFirmId = remoteStore.lastActiveFirmId;
-            }
-            localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
-            updateFirmUI();
-            renderCustomerList();
-            calculateGrandTotals();
-            if (selectedCustomerId && Store.firms[Store.activeFirmId]?.customers[selectedCustomerId]) {
-              renderLedgerView(selectedCustomerId);
-            }
-          }
-        }
+        processIncomingCloudData(encrypted);
       }
       if (badge) {
         badge.className = 'live-badge online';
@@ -786,20 +698,66 @@ function initCloudSync() {
       }
       if (txt) txt.innerText = "Live Sync";
     }, (err) => {
-      console.error("Firebase Read Error:", err);
-      if (badge) {
-        badge.className = 'live-badge offline';
-        badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Rules Locked!';
-        badge.title = err.message || "Permission Denied in Firebase Rules";
-      }
+      console.warn("Firebase WebSocket limited. Falling back to REST:", err);
+      forceCloudFetch(false);
     });
   } catch(err) {
-    console.error("Firebase init err:", err);
-    if (badge) {
-      badge.className = 'live-badge offline';
-      badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Sync Err';
-    }
+    console.warn("Firebase Init fallback to REST:", err);
+    forceCloudFetch(false);
   }
+}
+
+function processIncomingCloudData(encrypted) {
+  if (!encrypted) return;
+  const decrypted = decryptPayload(encrypted, Store.secretKey);
+  if (decrypted) {
+    try {
+      const remoteStore = JSON.parse(decrypted);
+      if (remoteStore.firms) {
+        Store.firms = remoteStore.firms;
+        if (remoteStore.lastActiveFirmId && Store.firms[remoteStore.lastActiveFirmId]) {
+          Store.activeFirmId = remoteStore.lastActiveFirmId;
+        }
+        localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
+        updateFirmUI();
+        renderCustomerList();
+        calculateGrandTotals();
+        if (selectedCustomerId && Store.firms[Store.activeFirmId]?.customers[selectedCustomerId]) {
+          renderLedgerView(selectedCustomerId);
+        }
+      }
+    } catch(e) { console.error(e); }
+  }
+}
+
+// DIRECT HTTPS REST SYNC (WebView Proof - 100% Works in Appmint APK)
+function forceCloudFetch(isManual = false) {
+  const dbUrl = (Store.firebaseUrl && Store.firebaseUrl.trim()) || FIREBASE_CONFIG.databaseURL;
+  const restUrl = `${dbUrl.replace(/\/$/, '')}/sgm_multi_firm_store.json`;
+  
+  const badge = document.getElementById('liveSyncBadge');
+  if (badge) {
+    badge.innerHTML = '<i class="fa-solid fa-rotate fa-spin" style="font-size:8px;"></i> Fetching...';
+  }
+
+  fetch(restUrl)
+    .then(res => res.json())
+    .then(data => {
+      if (data) {
+        processIncomingCloudData(data);
+        if (badge) {
+          badge.className = 'live-badge online';
+          badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync';
+        }
+        if (isManual) alert("Data successfully cloud se sync ho gaya!");
+      } else {
+        if (isManual) alert("Cloud par koi naya data nahi mila.");
+      }
+    })
+    .catch(err => {
+      console.error("REST Fetch error:", err);
+      if (isManual) alert("Sync Error: " + err.message);
+    });
 }
 
 function syncToCloud(isManual = false) {
@@ -809,51 +767,59 @@ function syncToCloud(isManual = false) {
       badge.className = 'live-badge offline';
       badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Offline (Local Saved)';
     }
-    if (isManual) alert("Internet band hai! Data phone me surakshit hai, net chalu hote hi sync ho jayega.");
+    if (isManual) alert("Internet band hai! Data phone me surakshit hai.");
     return;
   }
-  if (!fbDatabaseRef) {
-    initCloudSync();
-  }
-  if (fbDatabaseRef && Store.secretKey) {
-    if (badge) {
-      badge.className = 'live-badge online';
-      badge.innerHTML = '<i class="fa-solid fa-rotate fa-spin" style="font-size:8px;"></i> Syncing...';
-    }
-    const payload = JSON.stringify({ 
-      firms: Store.firms,
-      lastActiveFirmId: Store.activeFirmId,
-      updatedAt: Date.now()
-    });
-    const cipher = encryptPayload(payload, Store.secretKey);
-    fbDatabaseRef.set(cipher).then(() => {
-      if (badge) {
-        badge.className = 'live-badge online';
-        badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync';
-      }
-      if (isManual) alert("Cloud Sync Successful! Sabhi devices par data update ho gaya.");
-    }).catch((err) => {
-      console.error("Firebase Push Error:", err);
-      if (badge) {
-        badge.className = 'live-badge offline';
-        badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="font-size:8px;"></i> Sync Failed';
-        badge.title = err.message;
-      }
-      if (isManual || err.code === 'PERMISSION_DENIED') {
-        alert("Firebase Sync Alert: " + (err.message || "Rules Locked! Firebase Console me rules: true karein."));
-      }
-    });
-  }
-}
 
-// Auto sync when network returns
-window.addEventListener('online', () => {
-  const badge = document.getElementById('liveSyncBadge');
   if (badge) {
     badge.className = 'live-badge online';
-    badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Syncing...';
+    badge.innerHTML = '<i class="fa-solid fa-rotate fa-spin" style="font-size:8px;"></i> Syncing...';
   }
-  syncToCloud();
+
+  const payload = JSON.stringify({ 
+    firms: Store.firms,
+    lastActiveFirmId: Store.activeFirmId,
+    updatedAt: Date.now()
+  });
+  const cipher = encryptPayload(payload, Store.secretKey);
+
+  // 1. Send via Firebase Realtime SDK
+  if (fbDatabaseRef) {
+    fbDatabaseRef.set(cipher).catch(e => console.warn(e));
+  }
+
+  // 2. Direct HTTPS PUT (Dual Engine)
+  const dbUrl = (Store.firebaseUrl && Store.firebaseUrl.trim()) || FIREBASE_CONFIG.databaseURL;
+  const restUrl = `${dbUrl.replace(/\/$/, '')}/sgm_multi_firm_store.json`;
+
+  fetch(restUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cipher)
+  })
+  .then(res => res.json())
+  .then(() => {
+    if (badge) {
+      badge.className = 'live-badge online';
+      badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync';
+    }
+    if (isManual) {
+      forceCloudFetch(true);
+    }
+  })
+  .catch(err => {
+    console.error("Cloud PUT Error:", err);
+    if (badge) {
+      badge.className = 'live-badge offline';
+      badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="font-size:8px;"></i> Sync Error';
+    }
+    if (isManual) alert("Firebase Sync Error: " + err.message);
+  });
+}
+
+window.addEventListener('online', () => {
+  syncToCloud(false);
+  forceCloudFetch(false);
 });
 
 window.addEventListener('offline', () => {
@@ -864,7 +830,7 @@ window.addEventListener('offline', () => {
   }
 });
 
-// ================= GRAND TOTALS (Kitna Lena Hai & Dena Hai) =================
+// ================= GRAND TOTALS =================
 function calculateGrandTotals() {
   let totalLena = 0;
   let totalDena = 0;
@@ -883,13 +849,12 @@ function calculateGrandTotals() {
   document.getElementById('statNetBal').style.color = net >= 0 ? 'var(--danger)' : 'var(--primary)';
 }
 
-// ================= MULTI-FIRM / MULTI-BOOK MANAGEMENT =================
+// ================= MULTI-FIRM MANAGEMENT =================
 function updateFirmUI() {
   const currentFirm = Store.firms[Store.activeFirmId] || { name: "Default Book" };
   document.getElementById('currentFirmTitle').innerText = currentFirm.name;
   document.getElementById('mobileCurrentFirmTitle').innerText = currentFirm.name;
 
-  // Render desktop sidebar
   const sidebar = document.getElementById('firmListSidebar');
   sidebar.innerHTML = '';
   for (let fid in Store.firms) {
@@ -1036,7 +1001,6 @@ function renderCustomerList() {
     return tMax;
   }
 
-  // Apply Sort By (Image 2)
   if (activeSortOption === 'due_amount') {
     arr.sort((a,b) => parseFloat(b.balance || 0) - parseFloat(a.balance || 0));
   } else if (activeSortOption === 'name') {
@@ -1057,12 +1021,10 @@ function renderCustomerList() {
   arr.forEach(c => {
     const bal = parseFloat(c.balance || 0);
 
-    // Filters
     if (currentFilter === 'due' && bal <= 0) return;
     if (currentFilter === 'advance' && bal >= 0) return;
     if (currentFilter === 'zero' && bal !== 0) return;
 
-    // Search
     if (query && !c.name.toLowerCase().includes(query) && !(c.phone || '').includes(query)) return;
 
     rendered++;
@@ -1106,7 +1068,6 @@ function selectCustomer(cid) {
   renderCustomerList();
   renderLedgerView(cid);
 
-  // For mobile screen: open overlay
   if (window.innerWidth <= 900) {
     document.getElementById('ledgerPane').classList.add('mobile-open');
   }
@@ -1214,7 +1175,6 @@ function pressCalcKey(k) {
   disp.value = calcBuffer;
 }
 
-// Quick MRP Discount Preset Settings
 function toggleCalcSettings() {
   const p = document.getElementById('calcSettingsPanel');
   p.style.display = p.style.display === 'none' ? 'block' : 'none';
@@ -1304,7 +1264,7 @@ function submitTransactionEntry() {
   }
 }
 
-// ================= WHATSAPP & SMS DISPATCH (PROFESSIONAL HINDI TEMPLATES) =================
+// ================= WHATSAPP & SMS DISPATCH =================
 function getFormattedDateTime() {
   const now = new Date();
   const d = String(now.getDate()).padStart(2, '0');
@@ -1322,64 +1282,31 @@ function sendTransactionAlertWA(cust, tx) {
 
   let msg = "";
   if (tx.type === 'GIVEN') {
-    msg = `Dt:- *${dtStr}*
-
-` +
-          `नमस्ते ${cust.name} जी,
-
-` +
-          `हमारे साथ व्यवहार करने के लिए आपका हृदय से आभार।
-` +
-          `आपके खाते में ( *₹${tx.amount}* ) इतना लेने का (बिल/सामग्री) दर्ज कर दिया गया है।
-` +
-          (tx.note ? `विवरण (Note): ${tx.note}
-` : '') +
-          `
-${balStatus}
-
-` +
-          `सप्रेम,
-` +
-          `${firmName}
-
-` +
-          `Mode Of Payment:- Bill Entry
-` +
-          `Amount:- ₹${tx.amount}
-` +
-          `Payee Name:- ${cust.name}
-` +
+    msg = `Dt:- *${dtStr}*\n\n` +
+          `नमस्ते ${cust.name} जी,\n\n` +
+          `हमारे साथ व्यवहार करने के लिए आपका हृदय से आभार।\n` +
+          `आपके खाते में ( *₹${tx.amount}* ) इतना लेने का (बिल/सामग्री) दर्ज कर दिया गया है।\n` +
+          (tx.note ? `विवरण (Note): ${tx.note}\n` : '') +
+          `\n${balStatus}\n\n` +
+          `सप्रेम,\n` +
+          `${firmName}\n\n` +
+          `Mode Of Payment:- Bill Entry\n` +
+          `Amount:- ₹${tx.amount}\n` +
+          `Payee Name:- ${cust.name}\n` +
           `Payee Sign:- ${firmName}`;
   } else {
-    msg = `Dt:- *${dtStr}*
-
-` +
-          `नमस्ते ${cust.name} जी,
-
-` +
-          `हमारे साथ व्यवहार करने के लिए आपका कोटि-कोटि आभार।
-` +
-          `आपकी ओर से ( *₹${tx.amount}* ) का भुगतान सफलतापूर्वक जमा कर दिया गया है।
-` +
-          `समय पर भुगतान और विश्वास बनाए रखने के लिए धन्यवाद।
-` +
-          (tx.note ? `विवरण: ${tx.note}
-` : '') +
-          `
-${balStatus}
-
-` +
-          `सप्रेम,
-` +
-          `${firmName}
-
-` +
-          `Mode Of Payment:- Received
-` +
-          `Amount:- ₹${tx.amount}
-` +
-          `Payee Name:- ${cust.name}
-` +
+    msg = `Dt:- *${dtStr}*\n\n` +
+          `नमस्ते ${cust.name} जी,\n\n` +
+          `हमारे साथ व्यवहार करने के लिए आपका कोटि-कोटि आभार।\n` +
+          `आपकी ओर से ( *₹${tx.amount}* ) का भुगतान सफलतापूर्वक जमा कर दिया गया है।\n` +
+          `समय पर भुगतान और विश्वास बनाए रखने के लिए धन्यवाद।\n` +
+          (tx.note ? `विवरण: ${tx.note}\n` : '') +
+          `\n${balStatus}\n\n` +
+          `सप्रेम,\n` +
+          `${firmName}\n\n` +
+          `Mode Of Payment:- Received\n` +
+          `Amount:- ₹${tx.amount}\n` +
+          `Payee Name:- ${cust.name}\n` +
           `Payee Sign:- ${firmName}`;
   }
 
@@ -1396,11 +1323,9 @@ function sendTransactionAlertSMS(cust, tx) {
 
   let msg = "";
   if (tx.type === 'GIVEN') {
-    msg = `Dt: ${dtStr}
-Namaste ${cust.name}, hamare sath vyavhar hetu aabhar. Khate me (Rs.${tx.amount}) lene ka darj kiya gaya. ${tx.note ? 'Note: '+tx.note+'. ' : ''}Total ${balStatus}. - ${firmName}`;
+    msg = `Dt: ${dtStr}\nNamaste ${cust.name}, hamare sath vyavhar hetu aabhar. Khate me (Rs.${tx.amount}) lene ka darj kiya gaya. ${tx.note ? 'Note: '+tx.note+'. ' : ''}Total ${balStatus}. - ${firmName}`;
   } else {
-    msg = `Dt: ${dtStr}
-Namaste ${cust.name}, aapki or se (Rs.${tx.amount}) safaltapoorvak jama kar diya gaya hai. Aabhar! Total ${balStatus}. - ${firmName}`;
+    msg = `Dt: ${dtStr}\nNamaste ${cust.name}, aapki or se (Rs.${tx.amount}) safaltapoorvak jama kar diya gaya hai. Aabhar! Total ${balStatus}. - ${firmName}`;
   }
 
   const clean = cust.phone.replace(/[^0-9]/g, '');
@@ -1415,36 +1340,18 @@ function sendWhatsAppReminder() {
   const firmName = Store.firms[Store.activeFirmId].name || "श्री गणेश मेडिकल्स";
   const dtStr = getFormattedDateTime();
 
-  const msg = `Dt:- *${dtStr}*
-
-` +
-              `सादर नमस्कार,
-
-` +
-              `आशा है कि आप स्वस्थ और प्रसन्न हैं।
-` +
-              `आपसे एक विनम्र निवेदन है — हमारे पिछले लेन-देन से संबंधित भुगतान अब तक लंबित है।
-
-` +
-              `हमारा व्यवसाय निरंतर संचालन और सेवाओं की गुणवत्ता बनाए रखने के लिए समय पर भुगतानों पर निर्भर है। अतः आपसे अनुरोध है कि कृपया बकाया राशि जो ( *₹${bal.toFixed(1)}* ) इतना है, इसका निपटान यथाशीघ्र करें।
-
-` +
-              `यदि भुगतान पहले ही हो चुका है, तो कृपया इसे अनदेखा समझें।
-` +
-              `आपके सहयोग हेतु हम सदैव आभारी रहेंगे।
-
-` +
-              `सप्रेम,
-` +
-              `${firmName}
-
-` +
-              `Mode Of Payment:- UPI / Cash / Bank
-` +
-              `Amount:- ₹${bal.toFixed(1)}
-` +
-              `Payee Name:- ${cust.name}
-` +
+  const msg = `Dt:- *${dtStr}*\n\n` +
+              `सादर नमस्कार,\n\n` +
+              `आशा है कि आप स्वस्थ और प्रसन्न हैं।\n` +
+              `आपसे एक विनम्र निवेदन है — हमारे पिछले लेन-देन से संबंधित भुगतान अब तक लंबित है।\n\n` +
+              `हमारा व्यवसाय निरंतर संचालन और सेवाओं की गुणवत्ता बनाए रखने के लिए समय पर भुगतानों पर निर्भर है। अतः आपसे अनुरोध है कि कृपया बकाया राशि जो ( *₹${bal.toFixed(1)}* ) इतना है, इसका निपटान यथाशीघ्र करें।\n\n` +
+              `यदि भुगतान पहले ही हो चुका है, तो कृपया इसे अनदेखा समझें।\n` +
+              `आपके सहयोग हेतु हम सदैव आभारी रहेंगे।\n\n` +
+              `सप्रेम,\n` +
+              `${firmName}\n\n` +
+              `Mode Of Payment:- UPI / Cash / Bank\n` +
+              `Amount:- ₹${bal.toFixed(1)}\n` +
+              `Payee Name:- ${cust.name}\n` +
               `Payee Sign:- ${firmName}`;
 
   const clean = cust.phone.replace(/[^0-9]/g, '');
@@ -1460,9 +1367,7 @@ function sendSMSReminder() {
   const firmName = Store.firms[Store.activeFirmId].name || "श्री गणेश मेडिकल्स";
   const dtStr = getFormattedDateTime();
 
-  const msg = `Dt: ${dtStr}
-Sadar Namaskar,
-Apse vinamra nivedan hai ki pichle len-den ka bhugtan bakaya hai. Kripya bakaya rashi (Rs.${bal.toFixed(1)}) ka samay par bhugtan karein. Yadi bhugtan ho chuka hai toh andekha karein. - ${firmName}`;
+  const msg = `Dt: ${dtStr}\nSadar Namaskar,\nApse vinamra nivedan hai ki pichle len-den ka bhugtan bakaya hai. Kripya bakaya rashi (Rs.${bal.toFixed(1)}) ka samay par bhugtan karein. Yadi bhugtan ho chuka hai toh andekha karein. - ${firmName}`;
 
   const clean = cust.phone.replace(/[^0-9]/g, '');
   window.location.href = `sms:${clean}?body=${encodeURIComponent(msg)}`;
@@ -1615,7 +1520,6 @@ function handleRestoreFile(event) {
     };
     reader.readAsText(file);
   } else {
-    // OKCREDIT EXCEL / XLSX / XLS RESTORE ENGINE
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
@@ -1628,7 +1532,6 @@ function handleRestoreFile(event) {
         let nameCol = 0, mobCol = 1, balCol = 2;
         let headerRowIdx = -1;
 
-        // Auto-detect header row
         for (let r = 0; r < Math.min(rawRows.length, 15); r++) {
           const rowStr = rawRows[r].map(c => String(c).toUpperCase().trim());
           if (rowStr.includes('NAME')) {
@@ -1640,9 +1543,7 @@ function handleRestoreFile(event) {
           }
         }
 
-        if (headerRowIdx === -1) {
-          headerRowIdx = 6; // default OkCredit row offset
-        }
+        if (headerRowIdx === -1) headerRowIdx = 6;
 
         const currentFirm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
         if (!currentFirm.customers) currentFirm.customers = {};
@@ -1655,9 +1556,6 @@ function handleRestoreFile(event) {
 
           const phone = mobCol !== -1 ? String(row[mobCol] || '').replace(/[^0-9]/g, '') : '';
           let rawBal = balCol !== -1 ? parseFloat(String(row[balCol]).replace(/[^0-9.-]/g, '')) || 0 : 0;
-
-          // In OkCredit Excel: negative balance = Due (Lena hai), positive = Advance (Dena hai)
-          // In SGM Ledger: positive = Due, negative = Advance
           let sgmBal = -rawBal;
 
           const cid = 'cust_' + Date.now() + '_' + importedCount;
@@ -1698,7 +1596,7 @@ function handleRestoreFile(event) {
   }
 }
 
-// ================= INDIVIDUAL CUSTOMER LEDGER STATEMENT & SHARE =================
+// ================= INDIVIDUAL CUSTOMER LEDGER STATEMENT =================
 function printCustomerLedgerPDF() {
   if (!selectedCustomerId) return;
   const firm = Store.firms[Store.activeFirmId];
@@ -1792,38 +1690,23 @@ function shareCustomerLedgerWA() {
   
   let txList = '';
   const txs = cust.transactions || [];
-  const recent = txs.slice(-5); // last 5 transactions
+  const recent = txs.slice(-5);
   recent.forEach(t => {
-    txList += `• ${t.dateStr}: ${t.type === 'GIVEN' ? 'Given ₹' : 'Received ₹'}${t.amount} ${t.note ? '('+t.note+')' : ''}
-`;
+    txList += `• ${t.dateStr}: ${t.type === 'GIVEN' ? 'Given ₹' : 'Received ₹'}${t.amount} ${t.note ? '('+t.note+')' : ''}\n`;
   });
 
-  const msg = `Namaste ${cust.name} ji,
-` +
-              `Aapka *${firm.name}* par khata vivaran:
-
-` +
-              `*${balLabel}*
-
-` +
-              (recent.length ? `*Recent Entries:*
-${txList}
-` : '') +
-              `Kripya jald se jald hisaab clear karein.
-Dhanyawad!
-- ${firm.name}`;
+  const msg = `Namaste ${cust.name} ji,\n` +
+              `Aapka *${firm.name}* par khata vivaran:\n\n` +
+              `*${balLabel}*\n\n` +
+              (recent.length ? `*Recent Entries:*\n${txList}\n` : '') +
+              `Kripya jald se jald hisaab clear karein.\nDhanyawad!\n- ${firm.name}`;
 
   const clean = cust.phone.replace(/[^0-9]/g, '');
   const ph = clean.length === 10 ? '91' + clean : clean;
   window.open(`https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-
-
-// ================= SORT & FILTER LOGIC (IMAGE 2) =================
-let activeSortOption = 'default';
-let activeRemindOption = 'all';
-
+// ================= SORT & FILTER LOGIC =================
 function openFilterModal() {
   document.getElementById('filterModal').style.display = 'flex';
 }
@@ -1876,7 +1759,7 @@ function clearSortFilters() {
   renderCustomerList();
 }
 
-// ================= DYNAMIC UPI QR CODE GENERATOR (IMAGE 1) =================
+// ================= DYNAMIC UPI QR CODE GENERATOR =================
 let qrCodeObj = null;
 
 function openQrCollectionModal() {
@@ -1914,7 +1797,6 @@ function regenerateQrCode() {
   const cust = firm.customers ? firm.customers[selectedCustomerId] : null;
   const custName = cust ? cust.name : "Customer";
 
-  // Standard UPI URI format
   let upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(firm.name)}&cu=INR&tn=${encodeURIComponent('Payment for ' + custName)}`;
   if (amt > 0) {
     upiUrl += `&am=${amt.toFixed(2)}`;
@@ -1978,7 +1860,7 @@ function applyCloudSettings() {
   persistStore();
   closeCloudConfigModal();
   initCloudSync();
-  alert("Cloud sync settings updated!");
+  forceCloudFetch(true);
 }
 </script>
 </body>
