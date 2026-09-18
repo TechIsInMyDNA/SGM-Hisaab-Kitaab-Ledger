@@ -914,6 +914,11 @@ function saveFirmRecord() {
 }
 
 function deleteCurrentFirm() {
+  const pin = prompt("Security PIN Dalein Book delete karne ke liye:");
+  if (pin !== "1441") {
+    alert("Galat PIN! Book delete nahi ki gayi.");
+    return;
+  }
   if (confirm("Kya aap sach me is Book / Firm ko delete karna chahte hain?")) {
     delete Store.firms[editingFirmId];
     Store.activeFirmId = Object.keys(Store.firms)[0];
@@ -1479,6 +1484,11 @@ function saveCustomerData() {
 }
 
 function deleteSelectedCustomer() {
+  const pin = prompt("Security PIN Dalein Customer delete karne ke liye:");
+  if (pin !== "1441") {
+    alert("Galat PIN! Customer delete nahi kiya gaya.");
+    return;
+  }
   if (confirm("Kya aap sach me is customer ko delete karna chahte hain?")) {
     delete Store.firms[Store.activeFirmId].customers[selectedCustomerId];
     selectedCustomerId = null;
