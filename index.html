@@ -1145,24 +1145,6 @@ function renderLedgerView(cid) {
 }
 
 // ================= INBUILT CALCULATOR WITH SETTINGS =================
-function openTransactionModal(type) {
-  if (!selectedCustomerId) return;
-  currentTxType = type;
-  calcBuffer = '0';
-  document.getElementById('calcMainDisplay').value = '0';
-  document.getElementById('calcEntryNote').value = '';
-  document.getElementById('calcSettingsPanel').style.display = 'none';
-  
-  const heading = document.getElementById('calcModalHeading');
-  if (type === 'GIVEN') {
-    heading.innerText = '₹ Given Udhaar / Bill Item';
-    heading.style.color = 'var(--danger)';
-  } else {
-    heading.innerText = '₹ Payment Received';
-    heading.style.color = 'var(--primary)';
-  }
-  document.getElementById('entryCalcModal').style.display = 'flex';
-}
 
 function closeCalcModal() {
   document.getElementById('entryCalcModal').style.display = 'none';
@@ -1311,7 +1293,7 @@ function submitTransactionEntry() {
 
   const firm = Store.firms[Store.activeFirmId];
   const cust = firm.customers[selectedCustomerId];
-  if (!cust; !cust) return;
+  if (!cust) return;
 
   const note = document.getElementById('calcEntryNote').value.trim();
   const now = new Date();
