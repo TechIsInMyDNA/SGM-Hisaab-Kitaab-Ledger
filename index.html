@@ -1125,6 +1125,7 @@ function renderLedgerView(cid) {
     const isGiven = tx.type === 'GIVEN';
     const wrap = document.createElement('div');
     wrap.className = 'bubble-wrap';
+    const runText = running >= 0 ? `₹${running.toFixed(1)} Due` : `₹${Math.abs(running).toFixed(1)} Advance`;
     wrap.innerHTML = `
       <div class="entry-card-bubble ${isGiven ? 'bubble-given':'bubble-received'}">
         <div class="bubble-header">
@@ -1132,11 +1133,21 @@ function renderLedgerView(cid) {
             ${isGiven ? '<i class="fa-solid fa-arrow-up" style="color:var(--danger)"></i>' : '<i class="fa-solid fa-arrow-down" style="color:var(--primary)"></i>'}
             ₹${parseFloat(tx.amount).toFixed(1)}
           </div>
-          <div class="bubble-time">${tx.timeStr || ''}</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="bubble-time">${tx.timeStr || ''}</div>
+            <div style="display:inline-flex; align-items:center; gap:8px; margin-left:4px;">
+              <button onclick="editTransaction('${tx.id}')" title="Edit Entry" style="background:#eff6ff; border:1px solid #bfdbfe; color:#2563eb; padding:2px 7px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button onclick="deleteTransaction('${tx.id}')" title="Delete Entry (PIN: 1441)" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:2px 7px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
         </div>
         ${tx.note ? `<div class="bubble-note">${tx.note}</div>` : ''}
       </div>
-      <div class="bubble-running">${running >= 0 ? `₹${running.toFixed(1)} Due` : `₹${Math.abs(running).toFixed(1)} Advance`}</div>
+      <div class="entry-running-bal">${runText}</div>
     `;
     stream.appendChild(wrap);
   });
