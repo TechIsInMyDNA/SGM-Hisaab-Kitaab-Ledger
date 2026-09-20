@@ -796,6 +796,8 @@ function decryptPayload(cipherText, key) {
   } catch(e) { return null; }
 }
 
+let isCloudPullCompleted = false;
+
 function initCloudSync() {
   const badge = document.getElementById('liveSyncBadge');
   const txt = document.getElementById('cloudStatusTxt');
@@ -814,17 +816,18 @@ function initCloudSync() {
       if (encrypted) {
         processIncomingCloudData(encrypted);
       }
+      isCloudPullCompleted = true;
       if (badge) {
         badge.className = 'live-badge online';
         badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync';
       }
       if (txt) txt.innerText = "Live Sync";
     }, (err) => {
-      console.warn("WebSocket fallback:", err);
+      console.warn("WebSocket fallback to REST:", err);
       forceCloudFetch(false);
     });
   } catch(err) {
-    console.warn("Firebase Init fallback:", err);
+    console.warn("Firebase Init fallback to REST:", err);
     forceCloudFetch(false);
   }
 }
@@ -978,6 +981,7 @@ function processIncomingCloudData(encrypted) {
         if (selectedCustomerId && Store.firms[Store.activeFirmId]?.customers[selectedCustomerId]) {
           renderLedgerView(selectedCustomerId);
         }
+        isCloudPullCompleted = true;
       }
     } catch(e) { console.error("Parse incoming error:", e); }
   } else {
@@ -985,7 +989,7 @@ function processIncomingCloudData(encrypted) {
   }
 }
 
-function forceCloudFetch(isManual = false) {
+async function forceCloudFetch(isManual = false) {
   const dbUrl = (Store.firebaseUrl && Store.firebaseUrl.trim()) || FIREBASE_CONFIG.databaseURL;
   const restUrl = `${dbUrl.replace(/\/$/, '')}/sgm_multi_firm_store.json`;
   
@@ -994,24 +998,25 @@ function forceCloudFetch(isManual = false) {
     badge.innerHTML = '<i class="fa-solid fa-rotate fa-spin" style="font-size:8px;"></i> Syncing...';
   }
 
-  fetch(restUrl)
-    .then(res => res.json())
-    .then(data => {
-      if (data) {
-        processIncomingCloudData(data);
-        if (badge) {
-          badge.className = 'live-badge online';
-          badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync';
-        }
-        if (isManual) alert("Data successfully cloud se sync & merge ho gaya!");
-      } else {
-        if (isManual) alert("Cloud par abhi koi data nahi mila.");
+  try {
+    const res = await fetch(restUrl);
+    const data = await res.json();
+    if (data) {
+      processIncomingCloudData(data);
+      isCloudPullCompleted = true;
+      if (badge) {
+        badge.className = 'live-badge online';
+        badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync';
       }
-    })
-    .catch(err => {
-      console.error("REST Fetch error:", err);
-      if (isManual) alert("Cloud Fetch Error: " + err.message);
-    });
+      if (isManual) alert("Data successfully cloud se pull & merge ho gaya!");
+    } else {
+      isCloudPullCompleted = true;
+      if (isManual) alert("Cloud par abhi koi naya data nahi mila.");
+    }
+  } catch(err) {
+    console.error("REST Fetch error:", err);
+    if (isManual) alert("Cloud Fetch Error: " + err.message);
+  }
 }
 
 async function syncToCloud(isManual = false) {
@@ -1025,6 +1030,12 @@ async function syncToCloud(isManual = false) {
     return;
   }
 
+  // CRITICAL SAFETY LOCK: On newly opened device, PULL first before allowing any PUSH!
+  if (!isCloudPullCompleted) {
+    await forceCloudFetch(false);
+    isCloudPullCompleted = true;
+  }
+
   applyVaultSafetyToStore();
 
   let totalLocalCusts = 0;
@@ -1033,7 +1044,7 @@ async function syncToCloud(isManual = false) {
   }
   if (totalLocalCusts === 0) {
     console.warn("Local store is empty, skipping push to prevent wiping cloud.");
-    forceCloudFetch(isManual);
+    await forceCloudFetch(isManual);
     return;
   }
 
@@ -1045,6 +1056,7 @@ async function syncToCloud(isManual = false) {
   const dbUrl = (Store.firebaseUrl && Store.firebaseUrl.trim()) || FIREBASE_CONFIG.databaseURL;
   const restUrl = `${dbUrl.replace(/\/$/, '')}/sgm_multi_firm_store.json`;
 
+  // STEP 1: PRE-PUSH PULL & MERGE TO PREVENT ANY STALE OVERWRITE
   try {
     const res = await fetch(restUrl);
     const remoteEncrypted = await res.json();
@@ -1063,6 +1075,7 @@ async function syncToCloud(isManual = false) {
     console.warn("Pre-push cloud fetch failed, continuing with local store:", err);
   }
 
+  // STEP 2: PUSH MERGED UNIFIED DATA
   const payload = JSON.stringify({ 
     firms: Store.firms,
     lastActiveFirmId: Store.activeFirmId,
@@ -1088,7 +1101,7 @@ async function syncToCloud(isManual = false) {
     renderCustomerList();
     calculateGrandTotals();
     if (isManual) {
-      alert("Cloud Sync Successful! Sabhi devices par data safely update aur merge ho gaya.");
+      alert("Cloud Sync Successful! Sabhi devices par data safely merge aur sync ho gaya.");
     }
   } catch(err) {
     console.error("Cloud PUT Error:", err);
@@ -1900,6 +1913,7 @@ function handleRestoreFile(event) {
     };
     reader.readAsText(file);
   } else {
+    // OKCREDIT EXCEL / XLSX / XLS RESTORE ENGINE
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
@@ -1912,6 +1926,7 @@ function handleRestoreFile(event) {
         let nameCol = 0, mobCol = 1, balCol = 2;
         let headerRowIdx = -1;
 
+        // Auto-detect header row
         for (let r = 0; r < Math.min(rawRows.length, 15); r++) {
           const rowStr = rawRows[r].map(c => String(c).toUpperCase().trim());
           if (rowStr.includes('NAME')) {
@@ -1923,7 +1938,9 @@ function handleRestoreFile(event) {
           }
         }
 
-        if (headerRowIdx === -1) headerRowIdx = 6;
+        if (headerRowIdx === -1) {
+          headerRowIdx = 6; // default OkCredit row offset
+        }
 
         const currentFirm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
         if (!currentFirm.customers) currentFirm.customers = {};
@@ -1936,6 +1953,9 @@ function handleRestoreFile(event) {
 
           const phone = mobCol !== -1 ? String(row[mobCol] || '').replace(/[^0-9]/g, '') : '';
           let rawBal = balCol !== -1 ? parseFloat(String(row[balCol]).replace(/[^0-9.-]/g, '')) || 0 : 0;
+
+          // In OkCredit Excel: negative balance = Due (Lena hai), positive = Advance (Dena hai)
+          // In SGM Ledger: positive = Due, negative = Advance
           let sgmBal = -rawBal;
 
           const cid = 'cust_' + Date.now() + '_' + importedCount;
@@ -1976,7 +1996,7 @@ function handleRestoreFile(event) {
   }
 }
 
-// ================= INDIVIDUAL CUSTOMER LEDGER STATEMENT =================
+// ================= INDIVIDUAL CUSTOMER LEDGER STATEMENT & SHARE =================
 function printCustomerLedgerPDF() {
   if (!selectedCustomerId) return;
   const firm = Store.firms[Store.activeFirmId];
