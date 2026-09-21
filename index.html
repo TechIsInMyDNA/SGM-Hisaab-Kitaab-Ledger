@@ -597,6 +597,7 @@ let Store = {
   firebaseUrl: FIXED_REALTIME_DB_URL,
   calcPresets: [5, 7, 8, 10],
   deletedCustomerIds: [],
+  deletedFirmIds: [],
   firms: {
     'firm_default': { id: 'firm_default', name: 'Agrawal Shubham', customers: {} }
   }
@@ -672,6 +673,7 @@ function loadFromLocalStorage() {
   Store.secretKey = FIXED_SECRET_KEY;
   Store.firebaseUrl = FIXED_REALTIME_DB_URL;
   if (!Store.deletedCustomerIds) Store.deletedCustomerIds = [];
+  if (!Store.deletedFirmIds) Store.deletedFirmIds = [];
 
   if (!Store.firms || Object.keys(Store.firms).length === 0) {
     Store.firms = {
@@ -691,8 +693,15 @@ function loadFromLocalStorage() {
     }
   }
 
-  if (!Store.activeFirmId || Store.activeFirmId === 'firm_sgm') {
-    Store.activeFirmId = 'firm_default';
+  // Purge any blacklisted deleted firm from local memory
+  if (Store.deletedFirmIds.length > 0) {
+    for (let delFid of Store.deletedFirmIds) {
+      delete Store.firms[delFid];
+    }
+  }
+
+  if (!Store.firms[Store.activeFirmId]) {
+    Store.activeFirmId = Object.keys(Store.firms)[0] || 'firm_default';
   }
 }
 
@@ -789,6 +798,11 @@ function applyVaultSafetyToStore() {
         modified = true;
         continue;
       }
+      if (Store.deletedFirmIds && Store.deletedFirmIds.includes(fid)) {
+        delete vault[key];
+        modified = true;
+        continue;
+      }
 
       if (Store.firms[fid] && Store.firms[fid].customers && Store.firms[fid].customers[cid]) {
         const cust = Store.firms[fid].customers[cid];
@@ -829,13 +843,19 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
   if (!localFirms || typeof localFirms !== 'object') return remoteFirms;
 
   const merged = JSON.parse(JSON.stringify(localFirms));
-  const delSet = new Set(Store.deletedCustomerIds || []);
+  const delCustSet = new Set(Store.deletedCustomerIds || []);
+  const delFirmSet = new Set(Store.deletedFirmIds || []);
 
   for (let fid in remoteFirms) {
+    if (delFirmSet.has(fid)) {
+      delete merged[fid];
+      continue;
+    }
+
     if (!merged[fid]) {
       merged[fid] = remoteFirms[fid];
       if (merged[fid].customers) {
-        for (let delId of delSet) delete merged[fid].customers[delId];
+        for (let delId of delCustSet) delete merged[fid].customers[delId];
       }
       continue;
     }
@@ -847,7 +867,7 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
     const rCusts = rFirm.customers || {};
 
     for (let cid in rCusts) {
-      if (delSet.has(cid)) {
+      if (delCustSet.has(cid)) {
         delete lFirm.customers[cid];
         continue;
       }
@@ -901,6 +921,10 @@ function processIncomingCloudData(encrypted) {
           const combinedDel = new Set([...(Store.deletedCustomerIds || []), ...remoteStore.deletedCustomerIds]);
           Store.deletedCustomerIds = Array.from(combinedDel);
         }
+        if (remoteStore.deletedFirmIds && Array.isArray(remoteStore.deletedFirmIds)) {
+          const combinedDelFirms = new Set([...(Store.deletedFirmIds || []), ...remoteStore.deletedFirmIds]);
+          Store.deletedFirmIds = Array.from(combinedDelFirms);
+        }
 
         let localCount = 0;
         for (let f in Store.firms) localCount += Object.keys(Store.firms[f].customers || {}).length;
@@ -911,7 +935,10 @@ function processIncomingCloudData(encrypted) {
           Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms);
         }
 
-        // Purge deleted customers immediately from local
+        // Purge deleted customers & firms immediately from local
+        if (Store.deletedFirmIds && Store.deletedFirmIds.length > 0) {
+          for (let delFid of Store.deletedFirmIds) delete Store.firms[delFid];
+        }
         if (Store.deletedCustomerIds && Store.deletedCustomerIds.length > 0) {
           const delSet = new Set(Store.deletedCustomerIds);
           for (let fid in Store.firms) {
@@ -925,8 +952,8 @@ function processIncomingCloudData(encrypted) {
 
         if (remoteStore.lastActiveFirmId && Store.firms[remoteStore.lastActiveFirmId]) {
           Store.activeFirmId = remoteStore.lastActiveFirmId;
-        } else {
-          Store.activeFirmId = 'firm_default';
+        } else if (!Store.firms[Store.activeFirmId]) {
+          Store.activeFirmId = Object.keys(Store.firms)[0] || 'firm_default';
         }
 
         localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
@@ -1004,6 +1031,10 @@ async function syncToCloud(isManual = false) {
             const combinedDel = new Set([...(Store.deletedCustomerIds || []), ...remoteStore.deletedCustomerIds]);
             Store.deletedCustomerIds = Array.from(combinedDel);
           }
+          if (remoteStore.deletedFirmIds && Array.isArray(remoteStore.deletedFirmIds)) {
+            const combinedDelFirms = new Set([...(Store.deletedFirmIds || []), ...remoteStore.deletedFirmIds]);
+            Store.deletedFirmIds = Array.from(combinedDelFirms);
+          }
           Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms);
           applyVaultSafetyToStore();
           localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
@@ -1016,6 +1047,7 @@ async function syncToCloud(isManual = false) {
     firms: Store.firms,
     lastActiveFirmId: Store.activeFirmId,
     deletedCustomerIds: Store.deletedCustomerIds || [],
+    deletedFirmIds: Store.deletedFirmIds || [],
     updatedAt: Date.now()
   });
   const cipher = encryptPayload(payload, FIXED_SECRET_KEY);
@@ -1152,16 +1184,33 @@ function saveFirmRecord() {
   calculateGrandTotals();
 }
 
+// PERMANENT FIRM DELETION: Blacklists Firm ID across all devices
 function deleteCurrentFirm() {
   const pin = prompt("Security PIN Dalein Book delete karne ke liye:");
   if (pin !== "1441") return alert("Galat PIN! Book delete nahi ki gayi.");
   if (confirm("Kya aap sach me is Book / Firm ko delete karna chahte hain?")) {
-    delete Store.firms[editingFirmId];
-    Store.activeFirmId = Object.keys(Store.firms)[0];
-    persistStore();
+    const fidToDelete = editingFirmId;
+    if (!fidToDelete) return;
+
+    if (!Store.deletedFirmIds) Store.deletedFirmIds = [];
+    if (!Store.deletedFirmIds.includes(fidToDelete)) {
+      Store.deletedFirmIds.push(fidToDelete);
+    }
+
+    delete Store.firms[fidToDelete];
+    Store.activeFirmId = Object.keys(Store.firms)[0] || 'firm_default';
+    selectedCustomerId = null;
+
+    document.getElementById('ledgerActiveArea').style.display = 'none';
+    document.getElementById('ledgerEmptyMsg').style.display = 'flex';
+    closeLedgerMobileView();
+
+    localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
     updateFirmUI();
     closeFirmModal();
     renderCustomerList();
+    calculateGrandTotals();
+    syncToCloud(false);
   }
 }
 
@@ -1784,13 +1833,11 @@ function deleteSelectedCustomer() {
     const cidToDelete = selectedCustomerId;
     if (!cidToDelete) return;
 
-    // 1. Blacklist/Tombstone me add karein taaki sync hone par kabhi wapas na aaye
     if (!Store.deletedCustomerIds) Store.deletedCustomerIds = [];
     if (!Store.deletedCustomerIds.includes(cidToDelete)) {
       Store.deletedCustomerIds.push(cidToDelete);
     }
 
-    // 2. Safety Vault se is customer ka kissa poori tarah saaf karein
     try {
       const raw = localStorage.getItem('SGM_SAFETY_VAULT') || '{}';
       const vault = JSON.parse(raw);
@@ -1802,25 +1849,20 @@ function deleteSelectedCustomer() {
       localStorage.setItem('SGM_SAFETY_VAULT', JSON.stringify(vault));
     } catch(e) { console.warn("Vault delete error:", e); }
 
-    // 3. Sabhi firms se is customer ko delete karein
     for (let fid in Store.firms) {
       if (Store.firms[fid].customers && Store.firms[fid].customers[cidToDelete]) {
         delete Store.firms[fid].customers[cidToDelete];
       }
     }
 
-    // 4. Active screen reset karein
     selectedCustomerId = null;
     document.getElementById('ledgerActiveArea').style.display = 'none';
     document.getElementById('ledgerEmptyMsg').style.display = 'flex';
     closeLedgerMobileView();
     
-    // 5. Local storage save karein, totals calculate karein aur list re-render karein
     localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
     calculateGrandTotals();
     renderCustomerList();
-    
-    // 6. Cloud par instantly push karein taaki baaki 3 devices se bhi naam gayab ho jaye
     syncToCloud(false);
   }
 }
