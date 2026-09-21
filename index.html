@@ -577,13 +577,14 @@
 </div>
 
 <script>
-// ================= FIXED HARDCODED CREDENTIALS =================
+// ================= FIXED HARDCODED CREDENTIALS & ASIA-SOUTHEAST CLOUD URL =================
 const FIXED_SECRET_KEY = "SGMRocks@144";
+const FIXED_REALTIME_DB_URL = "https://sgm-hisaab-kitaab-ledger-default-rtdb.asia-southeast1.firebasedatabase.app";
 const DEFAULT_FIRM_ID = 'firm_default';
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyDP-NgX8kTFnekeVm_0lbg1UbEgE7zmDb4",
   authDomain: "sgm-hisaab-kitaab-ledger.firebaseapp.com",
-  databaseURL: "https://sgm-hisaab-kitaab-ledger-default-rtdb.firebaseio.com",
+  databaseURL: FIXED_REALTIME_DB_URL,
   projectId: "sgm-hisaab-kitaab-ledger",
   storageBucket: "sgm-hisaab-kitaab-ledger.firebasestorage.app",
   messagingSenderId: "63646304611",
@@ -593,7 +594,7 @@ const FIREBASE_CONFIG = {
 let Store = {
   activeFirmId: DEFAULT_FIRM_ID,
   secretKey: FIXED_SECRET_KEY,
-  firebaseUrl: FIREBASE_CONFIG.databaseURL,
+  firebaseUrl: FIXED_REALTIME_DB_URL,
   calcPresets: [5, 7, 8, 10],
   deletedCustomerIds: [],
   firms: {
@@ -614,7 +615,7 @@ let isCloudPullCompleted = false;
 
 const COLORS = ['#ef4444', '#f97316', '#10b981', '#06b6d4', '#6366f1', '#8b5cf6', '#ec4899'];
 
-// Keyboard support with Note and Date field bypass
+// Keyboard support
 document.addEventListener('keydown', function(e) {
   const modal = document.getElementById('entryCalcModal');
   if (!modal || modal.style.display !== 'flex') return;
@@ -668,7 +669,10 @@ function loadFromLocalStorage() {
       }
     } catch(e) { console.error("Storage parse error", e); }
   }
+  
+  // Always lock to correct credentials and Asian endpoint
   Store.secretKey = FIXED_SECRET_KEY;
+  Store.firebaseUrl = FIXED_REALTIME_DB_URL;
   if (!Store.deletedCustomerIds) Store.deletedCustomerIds = [];
 
   if (!Store.firms || Object.keys(Store.firms).length === 0) {
@@ -702,11 +706,19 @@ function encryptPayload(rawText, key) {
   try { return CryptoJS.AES.encrypt(rawText, key).toString(); } catch(e) { return rawText; }
 }
 
-function decryptPayload(cipherText, key) {
-  try {
-    const bytes = CryptoJS.AES.decrypt(cipherText, key);
-    return bytes.toString(CryptoJS.enc.Utf8) || null;
-  } catch(e) { return null; }
+// DUAL-KEY AUTO UNLOCK ENGINE: Handles both keys seamlessly
+function decryptPayloadUniversal(cipherText) {
+  const keysToTry = [FIXED_SECRET_KEY, "SGM@Gondia#2026SafeKey"];
+  for (let k of keysToTry) {
+    try {
+      const bytes = CryptoJS.AES.decrypt(cipherText, k);
+      const originalText = bytes.toString(CryptoJS.enc.Utf8);
+      if (originalText && originalText.includes("firms")) {
+        return { text: originalText, matchedKey: k };
+      }
+    } catch(e) {}
+  }
+  return null;
 }
 
 function initCloudSync() {
@@ -726,7 +738,7 @@ function initCloudSync() {
       }
       if (txt) txt.innerText = "Live Sync";
     }, (err) => {
-      console.warn("WebSocket fallback:", err);
+      console.warn("WebSocket fallback to REST:", err);
       forceCloudFetch(false);
     });
   } catch(err) {
@@ -871,10 +883,10 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
 
 function processIncomingCloudData(encrypted) {
   if (!encrypted) return;
-  const decrypted = decryptPayload(encrypted, FIXED_SECRET_KEY);
-  if (decrypted) {
+  const result = decryptPayloadUniversal(encrypted);
+  if (result && result.text) {
     try {
-      const remoteStore = JSON.parse(decrypted);
+      const remoteStore = JSON.parse(result.text);
       if (remoteStore && remoteStore.firms && Object.keys(remoteStore.firms).length > 0) {
         if (remoteStore.deletedCustomerIds && Array.isArray(remoteStore.deletedCustomerIds)) {
           const combinedDel = new Set([...(Store.deletedCustomerIds || []), ...remoteStore.deletedCustomerIds]);
@@ -901,13 +913,18 @@ function processIncomingCloudData(encrypted) {
           closeLedgerMobileView();
         }
         isCloudPullCompleted = true;
+
+        // Auto-re-encrypt with SGMRocks@144 if unlocked using older key
+        if (result.matchedKey !== FIXED_SECRET_KEY) {
+          syncToCloud(false);
+        }
       }
     } catch(e) { console.error("Parse incoming error:", e); }
   }
 }
 
 async function forceCloudFetch(isManual = false) {
-  const restUrl = `${FIREBASE_CONFIG.databaseURL.replace(/\/$/, '')}/sgm_multi_firm_store.json`;
+  const restUrl = `${FIXED_REALTIME_DB_URL.replace(/\/$/, '')}/sgm_multi_firm_store.json`;
   const badge = document.getElementById('liveSyncBadge');
   if (badge) badge.innerHTML = '<i class="fa-solid fa-rotate fa-spin" style="font-size:8px;"></i> Syncing...';
 
@@ -964,15 +981,15 @@ async function syncToCloud(isManual = false) {
     badge.innerHTML = '<i class="fa-solid fa-rotate fa-spin" style="font-size:8px;"></i> Syncing...';
   }
 
-  const restUrl = `${FIREBASE_CONFIG.databaseURL.replace(/\/$/, '')}/sgm_multi_firm_store.json`;
+  const restUrl = `${FIXED_REALTIME_DB_URL.replace(/\/$/, '')}/sgm_multi_firm_store.json`;
 
   try {
     const res = await fetch(restUrl);
     const remoteEncrypted = await res.json();
     if (remoteEncrypted) {
-      const decrypted = decryptPayload(remoteEncrypted, FIXED_SECRET_KEY);
-      if (decrypted) {
-        const remoteStore = JSON.parse(decrypted);
+      const result = decryptPayloadUniversal(remoteEncrypted);
+      if (result && result.text) {
+        const remoteStore = JSON.parse(result.text);
         if (remoteStore && remoteStore.firms) {
           if (remoteStore.deletedCustomerIds && Array.isArray(remoteStore.deletedCustomerIds)) {
             const combinedDel = new Set([...(Store.deletedCustomerIds || []), ...remoteStore.deletedCustomerIds]);
@@ -1410,7 +1427,6 @@ function openTransactionModal(type) {
   document.getElementById('calcEntryNote').value = '';
   document.getElementById('calcSettingsPanel').style.display = 'none';
   
-  // By default, set date picker to Today in YYYY-MM-DD
   const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -1443,7 +1459,6 @@ function editTransaction(txId) {
   document.getElementById('calcEntryNote').value = tx.note || '';
   document.getElementById('calcSettingsPanel').style.display = 'none';
 
-  // Populate date picker with transaction date
   if (tx.timestamp) {
     const d = new Date(Number(tx.timestamp));
     const yyyy = d.getFullYear();
@@ -1500,7 +1515,6 @@ function submitTransactionEntry() {
 
   const note = document.getElementById('calcEntryNote').value.trim();
   
-  // Custom Date Parsing
   const rawDate = document.getElementById('calcEntryDate').value;
   let dateObj = new Date();
   if (rawDate) {
@@ -1811,6 +1825,7 @@ function handleRestoreFile(event) {
         if (imported.firms) {
           Store = imported;
           Store.secretKey = FIXED_SECRET_KEY;
+          Store.firebaseUrl = FIXED_REALTIME_DB_URL;
           persistStore();
           updateFirmUI();
           renderCustomerList();
@@ -1887,10 +1902,7 @@ function handleRestoreFile(event) {
         renderCustomerList();
         calculateGrandTotals();
         alert(`${importedCount} OkCredit accounts successfully import/restore ho gaye!`);
-      } catch(err) {
-        console.error(err);
-        alert("Excel import error: " + err.message);
-      }
+      } catch(err) { alert("Excel import error: " + err.message); }
     };
     reader.readAsArrayBuffer(file);
   }
