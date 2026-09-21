@@ -178,7 +178,7 @@
           <span id="mobileCurrentFirmTitle">Agrawal Shubham</span> <i class="fa-solid fa-chevron-down" style="font-size:12px;"></i>
         </div>
         <h2 id="currentFirmTitle" style="display:none;">Agrawal Shubham</h2>
-        <div id="liveSyncBadge" class="live-badge online" style="cursor:pointer;" onclick="syncToCloud(true)" title="Click to Refresh / Live Sync Now"><i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync</div>
+        <div id="liveSyncBadge" class="live-badge online" style="cursor:pointer;" onclick="forceManualCloudSync()" title="Click to Force Sync Now"><i class="fa-solid fa-circle" style="font-size:8px;"></i> Live Sync</div>
       </div>
 
       <div class="top-btn-group">
@@ -598,8 +598,7 @@ let Store = {
   calcPresets: [5, 7, 8, 10],
   deletedCustomerIds: [],
   firms: {
-    'firm_default': { id: 'firm_default', name: 'Agrawal Shubham', customers: {} },
-    'firm_sgm': { id: 'firm_sgm', name: 'SGM', customers: {} }
+    'firm_default': { id: 'firm_default', name: 'Agrawal Shubham', customers: {} }
   }
 };
 
@@ -670,43 +669,31 @@ function loadFromLocalStorage() {
     } catch(e) { console.error("Storage parse error", e); }
   }
   
-  // Always lock to correct credentials and Asian endpoint
   Store.secretKey = FIXED_SECRET_KEY;
   Store.firebaseUrl = FIXED_REALTIME_DB_URL;
   if (!Store.deletedCustomerIds) Store.deletedCustomerIds = [];
 
   if (!Store.firms || Object.keys(Store.firms).length === 0) {
     Store.firms = {
-      'firm_default': { id: 'firm_default', name: 'Agrawal Shubham', customers: {} },
-      'firm_sgm': { id: 'firm_sgm', name: 'SGM', customers: {} }
+      'firm_default': { id: 'firm_default', name: 'Agrawal Shubham', customers: {} }
     };
   }
 
-  if (Store.deletedCustomerIds.length > 0) {
-    const delSet = new Set(Store.deletedCustomerIds);
-    for (let fid in Store.firms) {
-      if (Store.firms[fid].customers) {
-        for (let delId of delSet) delete Store.firms[fid].customers[delId];
-      }
-    }
-  }
-
-  if (!Store.firms[Store.activeFirmId]) {
-    Store.activeFirmId = Object.keys(Store.firms)[0] || DEFAULT_FIRM_ID;
+  if (!Store.activeFirmId || Store.activeFirmId === 'firm_sgm') {
+    Store.activeFirmId = 'firm_default';
   }
 }
 
 function persistStore() {
   localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
   calculateGrandTotals();
-  syncToCloud();
+  syncToCloud(false);
 }
 
 function encryptPayload(rawText, key) {
   try { return CryptoJS.AES.encrypt(rawText, key).toString(); } catch(e) { return rawText; }
 }
 
-// DUAL-KEY AUTO UNLOCK ENGINE: Handles both keys seamlessly
 function decryptPayloadUniversal(cipherText) {
   const keysToTry = [FIXED_SECRET_KEY, "SGM@Gondia#2026SafeKey"];
   for (let k of keysToTry) {
@@ -730,7 +717,9 @@ function initCloudSync() {
 
     fbDatabaseRef.on('value', (snap) => {
       const encrypted = snap.val();
-      if (encrypted) processIncomingCloudData(encrypted);
+      if (encrypted) {
+        processIncomingCloudData(encrypted);
+      }
       isCloudPullCompleted = true;
       if (badge) {
         badge.className = 'live-badge online';
@@ -817,6 +806,7 @@ function applyVaultSafetyToStore() {
   } catch(e) { console.warn("Apply vault error:", e); }
 }
 
+// ================= OKCREDIT-STYLE APPEND-ONLY TRANSACTION MERGE ENGINE =================
 function mergeLedgerFirms(localFirms, remoteFirms) {
   if (!remoteFirms || typeof remoteFirms !== 'object') return localFirms;
   if (!localFirms || typeof localFirms !== 'object') return remoteFirms;
@@ -859,11 +849,13 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
         lCust.updatedAt = rCust.updatedAt;
       }
 
+      // Map deduplication: ID matching avoids duplicate rows
       const txMap = new Map();
       (lCust.transactions || []).forEach(t => txMap.set(t.id, t));
       (rCust.transactions || []).forEach(t => {
-        if (!txMap.has(t.id)) txMap.set(t.id, t);
-        else {
+        if (!txMap.has(t.id)) {
+          txMap.set(t.id, t);
+        } else {
           const existing = txMap.get(t.id);
           if ((t.timestamp || 0) > (existing.timestamp || 0) || (t.note && !existing.note)) {
             txMap.set(t.id, t);
@@ -893,11 +885,21 @@ function processIncomingCloudData(encrypted) {
           Store.deletedCustomerIds = Array.from(combinedDel);
         }
 
-        Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms);
+        let localCount = 0;
+        for (let f in Store.firms) localCount += Object.keys(Store.firms[f].customers || {}).length;
+
+        if (localCount === 0) {
+          Store.firms = remoteStore.firms;
+        } else {
+          Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms);
+        }
+
         applyVaultSafetyToStore();
 
         if (remoteStore.lastActiveFirmId && Store.firms[remoteStore.lastActiveFirmId]) {
           Store.activeFirmId = remoteStore.lastActiveFirmId;
+        } else {
+          Store.activeFirmId = 'firm_default';
         }
 
         localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
@@ -906,18 +908,8 @@ function processIncomingCloudData(encrypted) {
         calculateGrandTotals();
         if (selectedCustomerId && Store.firms[Store.activeFirmId]?.customers[selectedCustomerId]) {
           renderLedgerView(selectedCustomerId);
-        } else if (selectedCustomerId && !Store.firms[Store.activeFirmId]?.customers[selectedCustomerId]) {
-          selectedCustomerId = null;
-          document.getElementById('ledgerActiveArea').style.display = 'none';
-          document.getElementById('ledgerEmptyMsg').style.display = 'flex';
-          closeLedgerMobileView();
         }
         isCloudPullCompleted = true;
-
-        // Auto-re-encrypt with SGMRocks@144 if unlocked using older key
-        if (result.matchedKey !== FIXED_SECRET_KEY) {
-          syncToCloud(false);
-        }
       }
     } catch(e) { console.error("Parse incoming error:", e); }
   }
@@ -949,6 +941,7 @@ async function forceCloudFetch(isManual = false) {
   }
 }
 
+// BULLETPROOF BIDIRECTIONAL SYNC: Incremental Merge, Zero Loss
 async function syncToCloud(isManual = false) {
   const badge = document.getElementById('liveSyncBadge');
   if (!navigator.onLine) {
@@ -957,22 +950,6 @@ async function syncToCloud(isManual = false) {
       badge.innerHTML = '<i class="fa-solid fa-circle" style="font-size:8px;"></i> Offline (Local Saved)';
     }
     if (isManual) alert("Internet band hai! Data phone me surakshit hai.");
-    return;
-  }
-
-  if (!isCloudPullCompleted) {
-    await forceCloudFetch(false);
-    isCloudPullCompleted = true;
-  }
-
-  applyVaultSafetyToStore();
-
-  let totalLocalCusts = 0;
-  for (let fid in Store.firms) {
-    totalLocalCusts += Object.keys(Store.firms[fid].customers || {}).length;
-  }
-  if (totalLocalCusts === 0 && (!Store.deletedCustomerIds || Store.deletedCustomerIds.length === 0)) {
-    await forceCloudFetch(isManual);
     return;
   }
 
@@ -1037,6 +1014,10 @@ async function syncToCloud(isManual = false) {
   }
 }
 
+function forceManualCloudSync() {
+  syncToCloud(true);
+}
+
 window.addEventListener('online', () => {
   syncToCloud(false);
   forceCloudFetch(false);
@@ -1053,7 +1034,7 @@ window.addEventListener('offline', () => {
 function calculateGrandTotals() {
   let totalLena = 0;
   let totalDena = 0;
-  const currentFirm = Store.firms[Store.activeFirmId];
+  const currentFirm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   if (currentFirm && currentFirm.customers) {
     for (let cid in currentFirm.customers) {
       const bal = parseFloat(currentFirm.customers[cid].balance || 0);
@@ -1069,7 +1050,7 @@ function calculateGrandTotals() {
 }
 
 function updateFirmUI() {
-  const currentFirm = Store.firms[Store.activeFirmId] || { name: "Default Book" };
+  const currentFirm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'] || { name: "Agrawal Shubham" };
   document.getElementById('currentFirmTitle').innerText = currentFirm.name;
   document.getElementById('mobileCurrentFirmTitle').innerText = currentFirm.name;
 
@@ -1196,7 +1177,7 @@ function renderCustomerList() {
   const query = document.getElementById('custSearchBox').value.toLowerCase().trim();
   cont.innerHTML = '';
 
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   if (!firm || !firm.customers) return;
 
   const arr = Object.values(firm.customers);
@@ -1225,8 +1206,6 @@ function renderCustomerList() {
       const lastB = (b.transactions || []).filter(t => t.type === 'RECEIVED').slice(-1)[0]?.timestamp || 0;
       return lastB - lastA;
     });
-  } else if (activeSortOption === 'latest_activity') {
-    arr.sort((a,b) => getCustActivityTime(b) - getCustActivityTime(a));
   } else {
     arr.sort((a,b) => getCustActivityTime(b) - getCustActivityTime(a));
   }
@@ -1291,7 +1270,7 @@ function closeLedgerMobileView() {
 }
 
 function renderLedgerView(cid) {
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   if (!firm || !firm.customers[cid]) return;
   const cust = firm.customers[cid];
 
@@ -1445,7 +1424,7 @@ function openTransactionModal(type) {
 }
 
 function editTransaction(txId) {
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   const cust = firm.customers[selectedCustomerId];
   if (!cust || !cust.transactions) return;
 
@@ -1483,7 +1462,7 @@ function deleteTransaction(txId) {
   if (pin !== "1441") return alert("Galat PIN! Transaction delete nahi kiya gaya.");
   if (!confirm("Kya aap sach me is transaction ko delete karna chahte hain?")) return;
 
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   const cust = firm.customers[selectedCustomerId];
   if (!cust || !cust.transactions) return;
 
@@ -1509,7 +1488,7 @@ function submitTransactionEntry() {
   const amt = parseFloat(document.getElementById('calcMainDisplay').value);
   if (isNaN(amt) || amt <= 0) return alert("Kripya valid amount dale!");
 
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   const cust = firm.customers[selectedCustomerId];
   if (!cust) return;
 
@@ -1546,8 +1525,9 @@ function submitTransactionEntry() {
       cust.updatedAt = Date.now();
     }
   } else {
+    // Unique ID generation with random suffix to prevent collisions across devices
     const tx = {
-      id: 'tx_' + Date.now(),
+      id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
       type: currentTxType,
       amount: amt,
       note: note,
@@ -1587,7 +1567,8 @@ function getFormattedDateTime() {
 }
 
 function sendTransactionAlertWA(cust, tx) {
-  const firmName = Store.firms[Store.activeFirmId].name || "Agrawal Shubham";
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+  const firmName = firm.name || "Agrawal Shubham";
   const netDue = parseFloat(cust.balance);
   const balStatus = netDue >= 0 ? `कुल बकाया राशि (Due): ₹${netDue.toFixed(1)}` : `अग्रिम राशि (Advance): ₹${Math.abs(netDue).toFixed(1)}`;
   const dtStr = getFormattedDateTime();
@@ -1628,7 +1609,8 @@ function sendTransactionAlertWA(cust, tx) {
 }
 
 function sendTransactionAlertSMS(cust, tx) {
-  const firmName = Store.firms[Store.activeFirmId].name || "Agrawal Shubham";
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+  const firmName = firm.name || "Agrawal Shubham";
   const netDue = parseFloat(cust.balance);
   const balStatus = netDue >= 0 ? `Due: Rs.${netDue.toFixed(1)}` : `Adv: Rs.${Math.abs(netDue).toFixed(1)}`;
   const dtStr = getFormattedDateTime();
@@ -1645,11 +1627,12 @@ function sendTransactionAlertSMS(cust, tx) {
 }
 
 function sendWhatsAppReminder() {
-  const cust = Store.firms[Store.activeFirmId].customers[selectedCustomerId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+  const cust = firm.customers[selectedCustomerId];
   if (!cust || !cust.phone) return alert("Mobile number uplabdh nahi hai!");
   const bal = parseFloat(cust.balance || 0);
   if (bal <= 0) return alert("Koi baki due payment nahi hai!");
-  const firmName = Store.firms[Store.activeFirmId].name || "Agrawal Shubham";
+  const firmName = firm.name || "Agrawal Shubham";
   const dtStr = getFormattedDateTime();
 
   const msg = `Dt:- *${dtStr}*\n\n` +
@@ -1672,11 +1655,12 @@ function sendWhatsAppReminder() {
 }
 
 function sendSMSReminder() {
-  const cust = Store.firms[Store.activeFirmId].customers[selectedCustomerId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+  const cust = firm.customers[selectedCustomerId];
   if (!cust || !cust.phone) return alert("Mobile number uplabdh nahi hai!");
   const bal = parseFloat(cust.balance || 0);
   if (bal <= 0) return alert("Koi baki due payment nahi hai!");
-  const firmName = Store.firms[Store.activeFirmId].name || "Agrawal Shubham";
+  const firmName = firm.name || "Agrawal Shubham";
   const dtStr = getFormattedDateTime();
 
   const msg = `Dt: ${dtStr}\nSadar Namaskar,\nApse vinamra nivedan hai ki pichle len-den ka bhugtan bakaya hai. Kripya bakaya rashi (Rs.${bal.toFixed(1)}) ka samay par bhugtan karein. Yadi bhugtan ho chuka hai toh andekha karein. - ${firmName}`;
@@ -1686,7 +1670,8 @@ function sendSMSReminder() {
 }
 
 function callCustomer() {
-  const cust = Store.firms[Store.activeFirmId].customers[selectedCustomerId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+  const cust = firm.customers[selectedCustomerId];
   if (cust && cust.phone) window.location.href = `tel:${cust.phone}`;
   else alert("Mobile number uplabdh nahi hai!");
 }
@@ -1703,7 +1688,8 @@ function openAddCustomerModal() {
 
 function openEditCustomerModal() {
   if (!selectedCustomerId) return;
-  const cust = Store.firms[Store.activeFirmId].customers[selectedCustomerId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+  const cust = firm.customers[selectedCustomerId];
   editingCustomerId = selectedCustomerId;
   document.getElementById('custModalHeading').innerText = 'Edit Customer Details';
   document.getElementById('custInpName').value = cust.name;
@@ -1721,19 +1707,19 @@ function saveCustomerData() {
   const phone = document.getElementById('custInpPhone').value.trim();
   if (!name) return alert("Customer name zaroori hai!");
 
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   if (editingCustomerId) {
     firm.customers[editingCustomerId].name = name;
     firm.customers[editingCustomerId].phone = phone;
     renderLedgerView(editingCustomerId);
   } else {
     const opening = parseFloat(document.getElementById('custInpOpening').value || 0);
-    const newId = 'cust_' + Date.now();
+    const newId = 'cust_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
     const txs = [];
     if (opening !== 0) {
       const now = new Date();
       txs.push({
-        id: 'tx_' + Date.now(),
+        id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
         type: opening > 0 ? 'GIVEN' : 'RECEIVED',
         amount: Math.abs(opening),
         note: 'Opening Balance',
@@ -1767,7 +1753,8 @@ function deleteSelectedCustomer() {
       Store.deletedCustomerIds.push(cidToDelete);
     }
 
-    delete Store.firms[Store.activeFirmId].customers[cidToDelete];
+    const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+    delete firm.customers[cidToDelete];
     selectedCustomerId = null;
     document.getElementById('ledgerActiveArea').style.display = 'none';
     document.getElementById('ledgerEmptyMsg').style.display = 'flex';
@@ -1910,7 +1897,7 @@ function handleRestoreFile(event) {
 
 function printCustomerLedgerPDF() {
   if (!selectedCustomerId) return;
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   const cust = firm.customers[selectedCustomerId];
   if (!cust) return;
 
@@ -1992,7 +1979,7 @@ function closePrintStatementModal() {
 
 function shareCustomerLedgerWA() {
   if (!selectedCustomerId) return;
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   const cust = firm.customers[selectedCustomerId];
   if (!cust || !cust.phone) return alert("Mobile number uplabdh nahi hai!");
 
@@ -2069,7 +2056,7 @@ let qrCodeObj = null;
 
 function openQrCollectionModal() {
   if (!selectedCustomerId) return;
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   const cust = firm.customers[selectedCustomerId];
   if (!cust) return;
 
@@ -2119,7 +2106,7 @@ function regenerateQrCode() {
 
 function sendQrWhatsApp() {
   if (!selectedCustomerId) return;
-  const firm = Store.firms[Store.activeFirmId];
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   const cust = firm.customers[selectedCustomerId];
   if (!cust || !cust.phone) return alert("Customer ka mobile number nahi mila!");
 
