@@ -614,7 +614,7 @@ let isCloudPullCompleted = false;
 
 const COLORS = ['#ef4444', '#f97316', '#10b981', '#06b6d4', '#6366f1', '#8b5cf6', '#ec4899'];
 
-// Keyboard support
+// Keyboard support with Note and Date field bypass
 document.addEventListener('keydown', function(e) {
   const modal = document.getElementById('entryCalcModal');
   if (!modal || modal.style.display !== 'flex') return;
@@ -677,6 +677,18 @@ function loadFromLocalStorage() {
     Store.firms = {
       'firm_default': { id: 'firm_default', name: 'Agrawal Shubham', customers: {} }
     };
+  }
+
+  // Purge any blacklisted deleted customer from local memory
+  if (Store.deletedCustomerIds.length > 0) {
+    const delSet = new Set(Store.deletedCustomerIds);
+    for (let fid in Store.firms) {
+      if (Store.firms[fid].customers) {
+        for (let delId of delSet) {
+          delete Store.firms[fid].customers[delId];
+        }
+      }
+    }
   }
 
   if (!Store.activeFirmId || Store.activeFirmId === 'firm_sgm') {
@@ -772,7 +784,11 @@ function applyVaultSafetyToStore() {
 
     for (let key in vault) {
       const [fid, cid] = key.split('___');
-      if (Store.deletedCustomerIds && Store.deletedCustomerIds.includes(cid)) continue;
+      if (Store.deletedCustomerIds && Store.deletedCustomerIds.includes(cid)) {
+        delete vault[key];
+        modified = true;
+        continue;
+      }
 
       if (Store.firms[fid] && Store.firms[fid].customers && Store.firms[fid].customers[cid]) {
         const cust = Store.firms[fid].customers[cid];
@@ -800,6 +816,7 @@ function applyVaultSafetyToStore() {
       }
     }
     if (modified) {
+      localStorage.setItem('SGM_SAFETY_VAULT', JSON.stringify(vault));
       localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
       calculateGrandTotals();
     }
@@ -894,6 +911,16 @@ function processIncomingCloudData(encrypted) {
           Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms);
         }
 
+        // Purge deleted customers immediately from local
+        if (Store.deletedCustomerIds && Store.deletedCustomerIds.length > 0) {
+          const delSet = new Set(Store.deletedCustomerIds);
+          for (let fid in Store.firms) {
+            if (Store.firms[fid].customers) {
+              for (let delId of delSet) delete Store.firms[fid].customers[delId];
+            }
+          }
+        }
+
         applyVaultSafetyToStore();
 
         if (remoteStore.lastActiveFirmId && Store.firms[remoteStore.lastActiveFirmId]) {
@@ -908,6 +935,11 @@ function processIncomingCloudData(encrypted) {
         calculateGrandTotals();
         if (selectedCustomerId && Store.firms[Store.activeFirmId]?.customers[selectedCustomerId]) {
           renderLedgerView(selectedCustomerId);
+        } else if (selectedCustomerId && !Store.firms[Store.activeFirmId]?.customers[selectedCustomerId]) {
+          selectedCustomerId = null;
+          document.getElementById('ledgerActiveArea').style.display = 'none';
+          document.getElementById('ledgerEmptyMsg').style.display = 'flex';
+          closeLedgerMobileView();
         }
         isCloudPullCompleted = true;
       }
@@ -1743,26 +1775,52 @@ function saveCustomerData() {
   renderCustomerList();
 }
 
+// PERMANENT CUSTOMER DELETION: Purges from Memory, Vault, and Blacklists on Cloud
 function deleteSelectedCustomer() {
   const pin = prompt("Security PIN Dalein Customer delete karne ke liye:");
   if (pin !== "1441") return alert("Galat PIN! Customer delete nahi kiya gaya.");
-  if (confirm("Kya aap sach me is customer ko delete karna chahte hain?")) {
+  
+  if (confirm("Kya aap sach me is customer ko delete karna chahte hain? Yeh list se poori tarah hat jayega.")) {
     const cidToDelete = selectedCustomerId;
+    if (!cidToDelete) return;
+
+    // 1. Blacklist/Tombstone me add karein taaki sync hone par kabhi wapas na aaye
     if (!Store.deletedCustomerIds) Store.deletedCustomerIds = [];
     if (!Store.deletedCustomerIds.includes(cidToDelete)) {
       Store.deletedCustomerIds.push(cidToDelete);
     }
 
-    const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
-    delete firm.customers[cidToDelete];
+    // 2. Safety Vault se is customer ka kissa poori tarah saaf karein
+    try {
+      const raw = localStorage.getItem('SGM_SAFETY_VAULT') || '{}';
+      const vault = JSON.parse(raw);
+      for (let key in vault) {
+        if (key.endsWith('___' + cidToDelete)) {
+          delete vault[key];
+        }
+      }
+      localStorage.setItem('SGM_SAFETY_VAULT', JSON.stringify(vault));
+    } catch(e) { console.warn("Vault delete error:", e); }
+
+    // 3. Sabhi firms se is customer ko delete karein
+    for (let fid in Store.firms) {
+      if (Store.firms[fid].customers && Store.firms[fid].customers[cidToDelete]) {
+        delete Store.firms[fid].customers[cidToDelete];
+      }
+    }
+
+    // 4. Active screen reset karein
     selectedCustomerId = null;
     document.getElementById('ledgerActiveArea').style.display = 'none';
     document.getElementById('ledgerEmptyMsg').style.display = 'flex';
     closeLedgerMobileView();
     
+    // 5. Local storage save karein, totals calculate karein aur list re-render karein
     localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
     calculateGrandTotals();
     renderCustomerList();
+    
+    // 6. Cloud par instantly push karein taaki baaki 3 devices se bhi naam gayab ho jaye
     syncToCloud(false);
   }
 }
