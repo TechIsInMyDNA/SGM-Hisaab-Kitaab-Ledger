@@ -25,6 +25,8 @@
     --text-muted: #64748b;
     --border-color: #e2e8f0;
     --accent: #2563eb;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg-body); color: var(--text-dark); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
@@ -96,6 +98,7 @@
   .filter-pills-row { display: flex; gap: 6px; overflow-x: auto; flex: 1; }
   .fpill { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; border: 1px solid var(--border-color); background: #fff; color: var(--text-muted); white-space: nowrap; }
   .fpill.active { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .fpill.defaulter-pill.active { background: #fef2f2; color: #dc2626; border-color: #dc2626; }
   .search-input-box { width: 280px; position: relative; }
   .search-input-box input { width: 100%; padding: 8px 12px 8px 34px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 13px; outline: none; background: #f8fafc; }
   .search-input-box i { position: absolute; left: 12px; top: 10px; color: #94a3b8; font-size: 13px; }
@@ -105,8 +108,16 @@
   .customer-card-item:hover, .customer-card-item.selected { background: #f0fdf4; border-color: #86efac; }
   .cust-left { display: flex; align-items: center; gap: 12px; }
   .cust-avatar-circle { width: 42px; height: 42px; border-radius: 50%; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; }
+  .cust-details .c-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .cust-details .c-name { font-weight: 800; font-size: 15px; color: #0f172a; }
   .cust-details .c-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  
+  /* SCORE BADGES */
+  .score-badge { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.3px; display: inline-flex; align-items: center; gap: 3px; }
+  .score-good { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+  .score-alert { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+  .score-danger { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
   .cust-right { text-align: right; }
   .cust-bal-val { font-size: 16px; font-weight: 900; }
   .cust-bal-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; }
@@ -282,6 +293,8 @@
         <div class="fpill" onclick="setCustomerFilter('due', this)">Lena Hai (Due)</div>
         <div class="fpill" onclick="setCustomerFilter('advance', this)">Advance</div>
         <div class="fpill" onclick="setCustomerFilter('zero', this)">Settled (₹0)</div>
+        <!-- DEFAULTER QUICK FILTER PILL -->
+        <div class="fpill defaulter-pill" onclick="setCustomerFilter('defaulter', this)"><i class="fa-solid fa-triangle-exclamation"></i> Defaulters (60+ Din)</div>
       </div>
       <div style="display:flex; gap:8px; align-items:center;">
         <div class="search-input-box">
@@ -309,7 +322,10 @@
               <i class="fa-solid fa-arrow-left" style="font-size:18px; cursor:pointer;" onclick="closeLedgerMobileView()"></i>
               <div class="cust-avatar-circle" id="ledgerAvatar" style="background:#0284c7;">A</div>
               <div>
-                <div style="font-weight:800; font-size:16px;" id="ledgerName">Customer Name</div>
+                <div style="font-weight:800; font-size:16px; display:flex; align-items:center; gap:8px;">
+                  <span id="ledgerName">Customer Name</span>
+                  <span id="ledgerScoreBadge"></span>
+                </div>
                 <div style="font-size:12px; color:var(--text-muted);" id="ledgerPhone">9876543210</div>
               </div>
             </div>
@@ -371,6 +387,11 @@
       <i class="fa-solid fa-xmark" style="font-size:20px; cursor:pointer;" onclick="closeCalcModal()"></i>
     </div>
     <div class="modal-body">
+      <!-- Defaulter Warning Banner in Calculator -->
+      <div id="calcDefaulterWarning" style="display:none; background:#fef2f2; border:1px solid #fca5a5; color:#b91c1c; padding:8px 12px; border-radius:10px; font-size:12px; font-weight:800; margin-bottom:10px;">
+        <i class="fa-solid fa-triangle-exclamation"></i> <span>Savdhan: Is customer ka 60+ din se koi payment nahi aaya hai!</span>
+      </div>
+
       <div id="calcSettingsPanel" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px; margin-bottom:12px;">
         <div style="font-size:12px; font-weight:800; margin-bottom:8px; color:#1e293b;">Calculator Presets:</div>
         <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-bottom:8px;">
@@ -575,7 +596,7 @@
             <input type="radio" name="remindOption" value="today" style="accent-color:var(--primary); transform:scale(1.2);">
           </label>
           <label style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; cursor:pointer; font-size:14px; font-weight:600;">
-            <span>Defaulters (7+ days)</span>
+            <span>Defaulters (60+ days)</span>
             <input type="radio" name="remindOption" value="defaulters" style="accent-color:var(--primary); transform:scale(1.2);">
           </label>
         </div>
@@ -893,6 +914,40 @@ function getCustomerBalanceFromTxs(txs) {
   return bal.toFixed(2);
 }
 
+// CUSTOMER HEALTH & CREDIT SCORE ENGINE (30 - 60 DAYS RULE)
+function getCustomerHealthScore(cust) {
+  const bal = parseFloat(cust.balance || 0);
+  if (bal <= 0) {
+    return { status: 'GOOD', label: 'Vyavsayik', class: 'score-good', icon: 'fa-circle-check', days: 0 };
+  }
+
+  const txs = cust.transactions || [];
+  let lastPaymentTime = 0;
+  let oldestGivenTime = 0;
+
+  for (let t of txs) {
+    const ts = Number(t.timestamp) || 0;
+    if (t.type === 'RECEIVED' && ts > lastPaymentTime) {
+      lastPaymentTime = ts;
+    }
+    if (t.type === 'GIVEN') {
+      if (oldestGivenTime === 0 || ts < oldestGivenTime) oldestGivenTime = ts;
+    }
+  }
+
+  const now = Date.now();
+  const refTime = lastPaymentTime > 0 ? lastPaymentTime : (oldestGivenTime > 0 ? oldestGivenTime : Number(cust.updatedAt) || now);
+  const diffDays = Math.max(0, Math.floor((now - refTime) / (1000 * 60 * 60 * 24)));
+
+  if (diffDays <= 30) {
+    return { status: 'GOOD', label: 'Vyavsayik', class: 'score-good', icon: 'fa-circle-check', days: diffDays };
+  } else if (diffDays <= 60) {
+    return { status: 'ALERT', label: `Alert (${diffDays}d)`, class: 'score-alert', icon: 'fa-clock', days: diffDays };
+  } else {
+    return { status: 'DEFAULTER', label: `Defaulter (${diffDays}d)`, class: 'score-danger', icon: 'fa-triangle-exclamation', days: diffDays };
+  }
+}
+
 function recordTransactionInVault(firmId, custId, tx, action = 'ADD_EDIT') {
   try {
     const raw = localStorage.getItem('SGM_SAFETY_VAULT') || '{}';
@@ -1074,7 +1129,6 @@ function processIncomingCloudData(encrypted) {
 
         applyVaultSafetyToStore();
 
-        // INDEPENDENT NAVIGATION: Keep local device's active book! Never force-switch!
         if (!Store.firms[Store.activeFirmId]) {
           Store.activeFirmId = Object.keys(Store.firms)[0] || 'firm_default';
         }
@@ -1166,7 +1220,6 @@ async function syncToCloud(isManual = false) {
     }
   } catch(err) { console.warn("Pre-push cloud fetch failed:", err); }
 
-  // NOTICE: lastActiveFirmId is completely REMOVED from payload so devices don't interfere with each other!
   const payload = JSON.stringify({ 
     firms: Store.firms,
     deletedCustomerIds: Store.deletedCustomerIds || [],
@@ -1307,7 +1360,6 @@ function saveFirmRecord() {
   calculateGrandTotals();
 }
 
-// PERMANENT FIRM DELETION: Blacklists Firm ID across all devices
 function deleteCurrentFirm() {
   const pin = prompt("Security PIN Dalein Book delete karne ke liye:");
   if (pin !== "1441") return alert("Galat PIN! Book delete nahi ki gayi.");
@@ -1417,10 +1469,12 @@ function renderCustomerList() {
   let rendered = 0;
   arr.forEach(c => {
     const bal = parseFloat(c.balance || 0);
+    const score = getCustomerHealthScore(c);
 
     if (currentFilter === 'due' && bal <= 0) return;
     if (currentFilter === 'advance' && bal >= 0) return;
     if (currentFilter === 'zero' && bal !== 0) return;
+    if (currentFilter === 'defaulter' && score.status !== 'DEFAULTER') return;
     if (query && !c.name.toLowerCase().includes(query) && !(c.phone || '').includes(query)) return;
 
     rendered++;
@@ -1442,7 +1496,10 @@ function renderCustomerList() {
       <div class="cust-left">
         <div class="cust-avatar-circle" style="background:${getAvatarBg(c.name)}">${c.name.charAt(0).toUpperCase()}</div>
         <div class="cust-details">
-          <div class="c-name">${c.name}</div>
+          <div class="c-name-row">
+            <span class="c-name">${c.name}</span>
+            <span class="score-badge ${score.class}"><i class="fa-solid ${score.icon}"></i> ${score.label}</span>
+          </div>
           <div class="c-sub">${subMsg}</div>
         </div>
       </div>
@@ -1455,7 +1512,7 @@ function renderCustomerList() {
   });
 
   if (rendered === 0) {
-    cont.innerHTML = `<div style="text-align:center; padding:40px 10px; color:#94a3b8; font-size:14px;">No customer found. Click <b>+ Add Customer</b> to create one!</div>`;
+    cont.innerHTML = `<div style="text-align:center; padding:40px 10px; color:#94a3b8; font-size:14px;">No customer found in this filter.</div>`;
   }
 }
 
@@ -1485,6 +1542,12 @@ function renderLedgerView(cid) {
   document.getElementById('ledgerPhone').innerText = cust.phone || 'No phone attached';
   document.getElementById('ledgerAvatar').innerText = cust.name.charAt(0).toUpperCase();
   document.getElementById('ledgerAvatar').style.background = getAvatarBg(cust.name);
+
+  // Score Badge in Header
+  const score = getCustomerHealthScore(cust);
+  const badgeEl = document.getElementById('ledgerScoreBadge');
+  badgeEl.className = `score-badge ${score.class}`;
+  badgeEl.innerHTML = `<i class="fa-solid ${score.icon}"></i> ${score.label}`;
 
   const bal = parseFloat(cust.balance || 0);
   const balLabel = bal > 0 ? `₹${bal.toFixed(1)} Due (Lena Hai)` : (bal < 0 ? `₹${Math.abs(bal).toFixed(1)} Advance` : `₹0.00 Settled`);
@@ -1616,13 +1679,31 @@ function openTransactionModal(type) {
   const dd = String(now.getDate()).padStart(2, '0');
   document.getElementById('calcEntryDate').value = `${yyyy}-${mm}-${dd}`;
 
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+  const cust = firm.customers[selectedCustomerId];
+  const score = cust ? getCustomerHealthScore(cust) : { status: 'GOOD' };
+  const warnEl = document.getElementById('calcDefaulterWarning');
+
   const heading = document.getElementById('calcModalHeading');
   if (type === 'GIVEN') {
     heading.innerText = '₹ Given Udhaar / Bill Item';
     heading.style.color = 'var(--danger)';
+    if (score.status === 'DEFAULTER') {
+      warnEl.style.display = 'block';
+      warnEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>Savdhan: Is customer ka ${score.days} din se koi payment nahi aaya hai (Defaulter)!</span>`;
+    } else if (score.status === 'ALERT') {
+      warnEl.style.display = 'block';
+      warnEl.style.background = '#fef3c7';
+      warnEl.style.borderColor = '#fcd34d';
+      warnEl.style.color = '#92400e';
+      warnEl.innerHTML = `<i class="fa-solid fa-clock"></i> <span>Dhyan dein: Payment ${score.days} din se pending hai (Alert).</span>`;
+    } else {
+      warnEl.style.display = 'none';
+    }
   } else {
     heading.innerText = '₹ Payment Received';
     heading.style.color = 'var(--primary)';
+    warnEl.style.display = 'none';
   }
   document.getElementById('entryCalcModal').style.display = 'flex';
 }
@@ -1641,6 +1722,7 @@ function editTransaction(txId) {
   document.getElementById('calcMainDisplay').value = calcBuffer;
   document.getElementById('calcEntryNote').value = tx.note || '';
   document.getElementById('calcSettingsPanel').style.display = 'none';
+  document.getElementById('calcDefaulterWarning').style.display = 'none';
 
   if (tx.timestamp) {
     const d = new Date(Number(tx.timestamp));
@@ -1946,7 +2028,6 @@ function saveCustomerData() {
   renderCustomerList();
 }
 
-// PERMANENT CUSTOMER DELETION: Purges from Memory, Vault, and Blacklists on Cloud
 function deleteSelectedCustomer() {
   const pin = prompt("Security PIN Dalein Customer delete karne ke liye:");
   if (pin !== "1441") return alert("Galat PIN! Customer delete nahi kiya gaya.");
@@ -1990,14 +2071,14 @@ function deleteSelectedCustomer() {
 }
 
 function exportFullExcel() {
-  let csv = "Firm,Customer Name,Phone,Net Balance (INR),Status\n";
+  let csv = "Firm,Customer Name,Phone,Net Balance (INR),Credit Status,Days Since Payment\n";
   for (let fid in Store.firms) {
     const firm = Store.firms[fid];
     for (let cid in firm.customers) {
       const c = firm.customers[cid];
       const bal = parseFloat(c.balance || 0);
-      const st = bal > 0 ? "Due (Lena Hai)" : (bal < 0 ? "Advance" : "Settled");
-      csv += `"${firm.name}","${c.name}","${c.phone || ''}",${bal},"${st}"\n`;
+      const score = getCustomerHealthScore(c);
+      csv += `"${firm.name}","${c.name}","${c.phone || ''}",${bal},"${score.label}",${score.days}\n`;
     }
   }
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
