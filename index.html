@@ -914,11 +914,11 @@ function getCustomerBalanceFromTxs(txs) {
   return bal.toFixed(2);
 }
 
-// CUSTOMER HEALTH & CREDIT SCORE ENGINE (30 - 60 DAYS RULE)
+// CUSTOMER HEALTH & CREDIT SCORE ENGINE (30 - 60 DAYS RULE WITH "VYAVHARIK")
 function getCustomerHealthScore(cust) {
   const bal = parseFloat(cust.balance || 0);
   if (bal <= 0) {
-    return { status: 'GOOD', label: 'Vyavsayik', class: 'score-good', icon: 'fa-circle-check', days: 0 };
+    return { status: 'GOOD', label: 'Vyavharik', class: 'score-good', icon: 'fa-circle-check', days: 0 };
   }
 
   const txs = cust.transactions || [];
@@ -940,7 +940,7 @@ function getCustomerHealthScore(cust) {
   const diffDays = Math.max(0, Math.floor((now - refTime) / (1000 * 60 * 60 * 24)));
 
   if (diffDays <= 30) {
-    return { status: 'GOOD', label: 'Vyavsayik', class: 'score-good', icon: 'fa-circle-check', days: diffDays };
+    return { status: 'GOOD', label: 'Vyavharik', class: 'score-good', icon: 'fa-circle-check', days: diffDays };
   } else if (diffDays <= 60) {
     return { status: 'ALERT', label: `Alert (${diffDays}d)`, class: 'score-alert', icon: 'fa-clock', days: diffDays };
   } else {
