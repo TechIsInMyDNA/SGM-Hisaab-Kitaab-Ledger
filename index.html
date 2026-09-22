@@ -83,6 +83,8 @@
   .btn-top:hover { background: #f8fafc; border-color: #cbd5e1; }
   .btn-top.btn-excel { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
   .btn-top.btn-backup { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+  .btn-top.btn-logout { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+  .btn-top.btn-logout:hover { background: #fecaca; }
   .totals-dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 14px 18px 6px; background: #fff; }
   .stat-card { background: #f8fafc; border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 14px; position: relative; }
   .stat-title { font-size: 12px; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between; }
@@ -244,6 +246,10 @@
         </button>
         <button class="btn-top" onclick="triggerRestoreJSON()" title="Restore JSON Data">
           <i class="fa-solid fa-upload"></i>
+        </button>
+        <!-- INSTANT LOGOUT / LOCK APP BUTTON -->
+        <button class="btn-top btn-logout" onclick="lockAppImmediately()" title="Lock / Logout Hisaab">
+          <i class="fa-solid fa-lock"></i> <span class="hide-mobile">Lock</span>
         </button>
         <input type="file" id="restoreFileInput" style="display:none;" onchange="handleRestoreFile(event)" accept=".xlsx, .xls, .json">
       </div>
@@ -708,6 +714,16 @@ function verifyDeviceAuth() {
   errBox.style.display = 'none';
   document.getElementById('authLockOverlay').style.display = 'none';
   startAppLifecycle();
+}
+
+// LOGOUT / LOCK APP INSTANTLY
+function lockAppImmediately() {
+  if (confirm("Kya aap sach me app ko lock / logout karna chahte hain?")) {
+    localStorage.removeItem('SGM_DEVICE_AUTHORIZED');
+    document.getElementById('authPinInput').value = '';
+    document.getElementById('authErrorMsg').style.display = 'none';
+    document.getElementById('authLockOverlay').style.display = 'flex';
+  }
 }
 
 function startAppLifecycle() {
@@ -1703,7 +1719,6 @@ function submitTransactionEntry() {
       cust.updatedAt = Date.now();
     }
   } else {
-    // Unique ID generation with random suffix to prevent collisions across devices
     const tx = {
       id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
       type: currentTxType,
