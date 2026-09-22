@@ -28,6 +28,38 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg-body); color: var(--text-dark); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+  
+  /* LOCK SCREEN STYLES */
+  #authLockOverlay {
+    position: fixed; inset: 0; background: #0f172a; z-index: 99999;
+    display: flex; justify-content: center; align-items: center; padding: 20px;
+  }
+  .lock-card {
+    background: #ffffff; width: 100%; max-width: 400px; border-radius: 20px;
+    padding: 28px 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); text-align: center;
+  }
+  .lock-icon-wrap {
+    width: 60px; height: 60px; background: #ecfdf5; color: #059669;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 26px; margin: 0 auto 16px;
+  }
+  .lock-input {
+    width: 100%; padding: 12px 14px; border: 2px solid var(--border-color);
+    border-radius: 12px; font-size: 15px; font-weight: 700; outline: none;
+    margin-bottom: 12px; background: #f8fafc; text-align: center; letter-spacing: 1px;
+  }
+  .lock-input:focus { border-color: var(--primary); background: #fff; }
+  .btn-unlock {
+    width: 100%; padding: 14px; border-radius: 12px; background: var(--primary);
+    color: #fff; font-size: 16px; font-weight: 800; border: none; cursor: pointer;
+    transition: 0.2s; box-shadow: 0 4px 15px rgba(5,150,105,0.3); margin-top: 6px;
+  }
+  .btn-unlock:hover { background: var(--primary-dark); }
+  .remember-box {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: 10px 0 14px; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer;
+  }
+
   .app-layout { display: flex; height: 100vh; width: 100%; max-width: 1400px; margin: 0 auto; background: #fff; box-shadow: 0 0 25px rgba(0,0,0,0.06); }
   .firm-sidebar { width: 260px; background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; border-right: 1px solid #334155; }
   .firm-sidebar-header { padding: 18px 16px; border-bottom: 1px solid #334155; display: flex; align-items: center; justify-content: space-between; }
@@ -156,6 +188,28 @@
 </style>
 </head>
 <body>
+
+<!-- ONE-TIME MASTER LOGIN / LOCK SCREEN -->
+<div id="authLockOverlay">
+  <div class="lock-card">
+    <div class="lock-icon-wrap">
+      <i class="fa-solid fa-shield-halved"></i>
+    </div>
+    <h2 style="font-size:20px; font-weight:900; color:#0f172a; margin-bottom:4px;">SGM Hisaab Kitaab</h2>
+    <p style="font-size:12px; color:#64748b; margin-bottom:20px;">Dukan Ledger Suraksha Verification</p>
+    
+    <input type="tel" id="authMobileInput" class="lock-input" placeholder="Authorized Mobile No." maxlength="10">
+    <input type="password" id="authPinInput" class="lock-input" placeholder="Master Passcode / PIN" maxlength="6">
+
+    <label class="remember-box">
+      <input type="checkbox" id="chkRememberDevice" checked style="accent-color:var(--primary); transform:scale(1.2);">
+      <span>Remember this device (Hamesha khula rakhein)</span>
+    </label>
+
+    <button class="btn-unlock" onclick="verifyDeviceAuth()">Unlock Hisaab Kitaab</button>
+    <div id="authErrorMsg" style="color:var(--danger); font-size:12px; font-weight:700; margin-top:12px; display:none;"></div>
+  </div>
+</div>
 
 <div class="app-layout">
   <div class="firm-sidebar">
@@ -577,7 +631,10 @@
 </div>
 
 <script>
-// ================= FIXED HARDCODED CREDENTIALS & ASIA-SOUTHEAST CLOUD URL =================
+// ================= FIXED HARDCODED CREDENTIALS & SECURITY WHITELIST =================
+const WHITELIST_MOBILES = ["9403346235", "9403346246"];
+const MASTER_PIN = "233245";
+
 const FIXED_SECRET_KEY = "SGMRocks@144";
 const FIXED_REALTIME_DB_URL = "https://sgm-hisaab-kitaab-ledger-default-rtdb.asia-southeast1.firebasedatabase.app";
 const DEFAULT_FIRM_ID = 'firm_default';
@@ -615,8 +672,68 @@ let isCloudPullCompleted = false;
 
 const COLORS = ['#ef4444', '#f97316', '#10b981', '#06b6d4', '#6366f1', '#8b5cf6', '#ec4899'];
 
-// Keyboard support with Note and Date field bypass
+// AUTHENTICATION ENGINE
+function checkDeviceAuthorization() {
+  const isAuth = localStorage.getItem('SGM_DEVICE_AUTHORIZED');
+  if (isAuth === 'YES_233245') {
+    document.getElementById('authLockOverlay').style.display = 'none';
+    startAppLifecycle();
+  } else {
+    document.getElementById('authLockOverlay').style.display = 'flex';
+  }
+}
+
+function verifyDeviceAuth() {
+  const mob = document.getElementById('authMobileInput').value.trim();
+  const pin = document.getElementById('authPinInput').value.trim();
+  const rem = document.getElementById('chkRememberDevice').checked;
+  const errBox = document.getElementById('authErrorMsg');
+
+  if (!WHITELIST_MOBILES.includes(mob)) {
+    errBox.style.display = 'block';
+    errBox.innerText = 'Yeh mobile number authorized nahi hai!';
+    return;
+  }
+
+  if (pin !== MASTER_PIN) {
+    errBox.style.display = 'block';
+    errBox.innerText = 'Galat Master Passcode / PIN!';
+    return;
+  }
+
+  if (rem) {
+    localStorage.setItem('SGM_DEVICE_AUTHORIZED', 'YES_233245');
+  }
+
+  errBox.style.display = 'none';
+  document.getElementById('authLockOverlay').style.display = 'none';
+  startAppLifecycle();
+}
+
+function startAppLifecycle() {
+  loadFromLocalStorage();
+  applyVaultSafetyToStore();
+  updateFirmUI();
+  initCloudSync();
+  renderCustomerList();
+  calculateGrandTotals();
+  applyCalcPresetsUI();
+  forceCloudFetch(false);
+}
+
+// Auto-Launch Setup
+window.onload = function() {
+  checkDeviceAuthorization();
+};
+
+// Keyboard support
 document.addEventListener('keydown', function(e) {
+  const lock = document.getElementById('authLockOverlay');
+  if (lock && lock.style.display !== 'none') {
+    if (e.key === 'Enter') verifyDeviceAuth();
+    return;
+  }
+
   const modal = document.getElementById('entryCalcModal');
   if (!modal || modal.style.display !== 'flex') return;
 
@@ -647,18 +764,6 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// Auto-Launch Setup
-window.onload = function() {
-  loadFromLocalStorage();
-  applyVaultSafetyToStore();
-  updateFirmUI();
-  initCloudSync();
-  renderCustomerList();
-  calculateGrandTotals();
-  applyCalcPresetsUI();
-  forceCloudFetch(false);
-};
-
 function loadFromLocalStorage() {
   const local = localStorage.getItem('SGM_HISAAB_STORE_V2');
   if (local) {
@@ -681,23 +786,17 @@ function loadFromLocalStorage() {
     };
   }
 
-  // Purge any blacklisted deleted customer from local memory
   if (Store.deletedCustomerIds.length > 0) {
     const delSet = new Set(Store.deletedCustomerIds);
     for (let fid in Store.firms) {
       if (Store.firms[fid].customers) {
-        for (let delId of delSet) {
-          delete Store.firms[fid].customers[delId];
-        }
+        for (let delId of delSet) delete Store.firms[fid].customers[delId];
       }
     }
   }
 
-  // Purge any blacklisted deleted firm from local memory
   if (Store.deletedFirmIds.length > 0) {
-    for (let delFid of Store.deletedFirmIds) {
-      delete Store.firms[delFid];
-    }
+    for (let delFid of Store.deletedFirmIds) delete Store.firms[delFid];
   }
 
   if (!Store.firms[Store.activeFirmId]) {
@@ -886,7 +985,6 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
         lCust.updatedAt = rCust.updatedAt;
       }
 
-      // Map deduplication: ID matching avoids duplicate rows
       const txMap = new Map();
       (lCust.transactions || []).forEach(t => txMap.set(t.id, t));
       (rCust.transactions || []).forEach(t => {
@@ -950,9 +1048,8 @@ function processIncomingCloudData(encrypted) {
 
         applyVaultSafetyToStore();
 
-        if (remoteStore.lastActiveFirmId && Store.firms[remoteStore.lastActiveFirmId]) {
-          Store.activeFirmId = remoteStore.lastActiveFirmId;
-        } else if (!Store.firms[Store.activeFirmId]) {
+        // INDEPENDENT NAVIGATION: Keep local device's active book! Never force-switch!
+        if (!Store.firms[Store.activeFirmId]) {
           Store.activeFirmId = Object.keys(Store.firms)[0] || 'firm_default';
         }
 
@@ -1000,7 +1097,7 @@ async function forceCloudFetch(isManual = false) {
   }
 }
 
-// BULLETPROOF BIDIRECTIONAL SYNC: Incremental Merge, Zero Loss
+// BULLETPROOF BIDIRECTIONAL SYNC: Incremental Merge, Zero Loss, No lastActiveFirmId Leaks
 async function syncToCloud(isManual = false) {
   const badge = document.getElementById('liveSyncBadge');
   if (!navigator.onLine) {
@@ -1043,9 +1140,9 @@ async function syncToCloud(isManual = false) {
     }
   } catch(err) { console.warn("Pre-push cloud fetch failed:", err); }
 
+  // NOTICE: lastActiveFirmId is completely REMOVED from payload so devices don't interfere with each other!
   const payload = JSON.stringify({ 
     firms: Store.firms,
-    lastActiveFirmId: Store.activeFirmId,
     deletedCustomerIds: Store.deletedCustomerIds || [],
     deletedFirmIds: Store.deletedFirmIds || [],
     updatedAt: Date.now()
