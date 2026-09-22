@@ -988,13 +988,25 @@ function applyVaultSafetyToStore() {
       if (Store.firms[fid] && Store.firms[fid].customers && Store.firms[fid].customers[cid]) {
         const cust = Store.firms[fid].customers[cid];
         if (!cust.transactions) cust.transactions = [];
-        const existingIds = new Set(cust.transactions.map(t => t.id));
+        const existingMap = new Map();
+        cust.transactions.forEach(t => existingMap.set(t.id, t));
         const deletedSet = new Set(vault[key].deletedTxIds || []);
 
         for (let txId in (vault[key].txs || {})) {
-          if (!existingIds.has(txId) && !deletedSet.has(txId)) {
-            cust.transactions.push(vault[key].txs[txId]);
-            modified = true;
+          if (!deletedSet.has(txId)) {
+            const vTx = vault[key].txs[txId];
+            if (!existingMap.has(txId)) {
+              cust.transactions.push(vTx);
+              modified = true;
+            } else {
+              const existing = existingMap.get(txId);
+              const vEdit = Number(vTx.updatedAt) || Number(vTx.timestamp) || 0;
+              const exEdit = Number(existing.updatedAt) || Number(existing.timestamp) || 0;
+              if (vEdit > exEdit) {
+                Object.assign(existing, vTx);
+                modified = true;
+              }
+            }
           }
         }
 
@@ -1018,7 +1030,7 @@ function applyVaultSafetyToStore() {
   } catch(e) { console.warn("Apply vault error:", e); }
 }
 
-// ================= OKCREDIT-STYLE APPEND-ONLY TRANSACTION MERGE ENGINE =================
+// ================= BULLETPROOF TRANSACTION MERGE WITH `updatedAt` VERSIONING =================
 function mergeLedgerFirms(localFirms, remoteFirms) {
   if (!remoteFirms || typeof remoteFirms !== 'object') return localFirms;
   if (!localFirms || typeof localFirms !== 'object') return remoteFirms;
@@ -1069,13 +1081,20 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
 
       const txMap = new Map();
       (lCust.transactions || []).forEach(t => txMap.set(t.id, t));
-      (rCust.transactions || []).forEach(t => {
-        if (!txMap.has(t.id)) {
-          txMap.set(t.id, t);
+      
+      (rCust.transactions || []).forEach(rTx => {
+        if (!txMap.has(rTx.id)) {
+          txMap.set(rTx.id, rTx);
         } else {
-          const existing = txMap.get(t.id);
-          if ((t.timestamp || 0) > (existing.timestamp || 0) || (t.note && !existing.note)) {
-            txMap.set(t.id, t);
+          const lTx = txMap.get(rTx.id);
+          // Compare edit version timestamp: ALWAYS keep the newer edit!
+          const rTime = Math.max(Number(rTx.updatedAt) || 0, Number(rTx.timestamp) || 0);
+          const lTime = Math.max(Number(lTx.updatedAt) || 0, Number(lTx.timestamp) || 0);
+          
+          if (rTime > lTime) {
+            txMap.set(rTx.id, rTx);
+          } else if (rTime === lTime) {
+            if (rTx.note && !lTx.note) txMap.set(rTx.id, rTx);
           }
         }
       });
@@ -1085,6 +1104,9 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
       lCust.transactions = mergedTxs;
       lCust.balance = getCustomerBalanceFromTxs(mergedTxs);
       lCust.updatedAt = Math.max(lCust.updatedAt || 0, rCust.updatedAt || 0);
+
+      // Keep local vault in sync with merged edits
+      mergedTxs.forEach(t => recordTransactionInVault(fid, cid, t, 'ADD_EDIT'));
     }
   }
   return merged;
@@ -1177,7 +1199,7 @@ async function forceCloudFetch(isManual = false) {
   }
 }
 
-// BULLETPROOF BIDIRECTIONAL SYNC: Incremental Merge, Zero Loss, No lastActiveFirmId Leaks
+// BULLETPROOF BIDIRECTIONAL SYNC: Incremental Merge, Zero Loss, No Overwrite
 async function syncToCloud(isManual = false) {
   const badge = document.getElementById('liveSyncBadge');
   if (!navigator.onLine) {
@@ -1441,7 +1463,8 @@ function renderCustomerList() {
     let tMax = Number(c.updatedAt) || 0;
     if (c.transactions && c.transactions.length) {
       for (let t of c.transactions) {
-        if (Number(t.timestamp) > tMax) tMax = Number(t.timestamp);
+        const tActive = Math.max(Number(t.updatedAt) || 0, Number(t.timestamp) || 0);
+        if (tActive > tMax) tMax = tActive;
       }
     }
     const parts = (c.id || '').split('_');
@@ -1790,6 +1813,7 @@ function submitTransactionEntry() {
   const dateStr = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   const txTimestamp = dateObj.getTime();
+  const currentActionTime = Date.now();
 
   if (editingTxId) {
     const tx = cust.transactions.find(t => t.id === editingTxId);
@@ -1804,11 +1828,12 @@ function submitTransactionEntry() {
       tx.dateStr = dateStr;
       tx.timeStr = timeStr;
       tx.timestamp = txTimestamp;
+      tx.updatedAt = currentActionTime; // CRITICAL: Updates live version timestamp!
       recordTransactionInVault(Store.activeFirmId, selectedCustomerId, tx, 'ADD_EDIT');
 
       if (currentTxType === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) + amt).toFixed(2);
       else cust.balance = (parseFloat(cust.balance || 0) - amt).toFixed(2);
-      cust.updatedAt = Date.now();
+      cust.updatedAt = currentActionTime;
     }
   } else {
     const tx = {
@@ -1818,7 +1843,8 @@ function submitTransactionEntry() {
       note: note,
       dateStr: dateStr,
       timeStr: timeStr,
-      timestamp: txTimestamp
+      timestamp: txTimestamp,
+      updatedAt: currentActionTime
     };
 
     if (!cust.transactions) cust.transactions = [];
@@ -1827,7 +1853,7 @@ function submitTransactionEntry() {
 
     if (currentTxType === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) + amt).toFixed(2);
     else cust.balance = (parseFloat(cust.balance || 0) - amt).toFixed(2);
-    cust.updatedAt = Date.now();
+    cust.updatedAt = currentActionTime;
 
     const sendWA = document.getElementById('chkWhatsAppAlert').checked;
     const sendSMS = document.getElementById('chkSMSAlert').checked;
@@ -1921,7 +1947,7 @@ function sendWhatsAppReminder() {
   const dtStr = getFormattedDateTime();
 
   const msg = `Dt:- *${dtStr}*\n\n` +
-              `सादर नमस्कार,\n\n` +
+              ` सादर नमस्कार,\n\n` +
               `आशा है कि आप स्वस्थ और प्रसन्न हैं।\n` +
               `आपसे एक विनम्र निवेदन है — हमारे पिछले लेन-देन से संबंधित भुगतान अब तक लंबित है।\n\n` +
               `हमारा व्यवसाय निरंतर संचालन और सेवाओं की गुणवत्ता बनाए रखने के लिए समय पर भुगतानों पर निर्भर है। अतः आपसे अनुरोध है कि कृपया बकाया राशि जो ( *₹${bal.toFixed(1)}* ) इतना है, इसका निपटान यथाशीघ्र करें।\n\n` +
@@ -1996,11 +2022,13 @@ function saveCustomerData() {
   if (editingCustomerId) {
     firm.customers[editingCustomerId].name = name;
     firm.customers[editingCustomerId].phone = phone;
+    firm.customers[editingCustomerId].updatedAt = Date.now();
     renderLedgerView(editingCustomerId);
   } else {
     const opening = parseFloat(document.getElementById('custInpOpening').value || 0);
     const newId = 'cust_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
     const txs = [];
+    const nowTime = Date.now();
     if (opening !== 0) {
       const now = new Date();
       txs.push({
@@ -2010,7 +2038,8 @@ function saveCustomerData() {
         note: 'Opening Balance',
         dateStr: now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
         timeStr: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-        timestamp: Date.now()
+        timestamp: nowTime,
+        updatedAt: nowTime
       });
     }
     firm.customers[newId] = {
@@ -2019,7 +2048,7 @@ function saveCustomerData() {
       phone: phone,
       balance: opening.toFixed(2),
       transactions: txs,
-      updatedAt: Date.now()
+      updatedAt: nowTime
     };
     selectCustomer(newId);
   }
@@ -2173,7 +2202,8 @@ function handleRestoreFile(event) {
               note: 'Imported from OkCredit Backup',
               dateStr: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
               timeStr: '12:00 PM',
-              timestamp: Date.now()
+              timestamp: Date.now(),
+              updatedAt: Date.now()
             });
           }
 
@@ -2252,7 +2282,7 @@ function printCustomerLedgerPDF() {
       </div>
     </div>
 
-    <table style="width:100%; border-collapse:collapse; text-align:left;">
+    <table style="width:100%; border-collapse:collapse; text-left;">
       <thead>
         <tr style="border-bottom:2px solid #cbd5e1; font-size:11px; font-weight:800; color:#475569; text-transform:uppercase;">
           <th style="padding:6px 4px;">DATE</th>
