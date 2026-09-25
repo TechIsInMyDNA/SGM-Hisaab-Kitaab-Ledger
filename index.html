@@ -430,11 +430,11 @@
 
       <div class="msg-toggle-row">
         <span><i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> WhatsApp Alert Link</span>
-        <input type="checkbox" id="chkWhatsAppAlert" checked>
+        <input type="checkbox" id="chkWhatsAppAlert" onchange="persistAlertToggles()">
       </div>
       <div class="msg-toggle-row">
         <span><i class="fa-solid fa-comment-sms" style="color:#2563eb;"></i> Normal Text SMS</span>
-        <input type="checkbox" id="chkSMSAlert">
+        <input type="checkbox" id="chkSMSAlert" onchange="persistAlertToggles()">
       </div>
 
       <div class="calc-keys-grid">
@@ -710,6 +710,32 @@ let isCloudPullCompleted = false;
 
 const COLORS = ['#ef4444', '#f97316', '#10b981', '#06b6d4', '#6366f1', '#8b5cf6', '#ec4899'];
 
+// ================= STEP 1: SMART ANDROID BACK BUTTON (FOR APPMINT / APK) =================
+let isNavigatingBackInternally = false;
+
+function pushModalState(modalId) {
+  try {
+    history.pushState({ modalId: modalId, timestamp: Date.now() }, "");
+  } catch(e) {}
+}
+
+window.addEventListener('popstate', function(e) {
+  // 1. If any modal is open, close it first
+  const openModal = document.querySelector('.modal-overlay[style*="display: flex"], .modal-overlay[style*="display:flex"]');
+  if (openModal) {
+    openModal.style.display = 'none';
+    editingTxId = null;
+    return;
+  }
+
+  // 2. If mobile ledger pane is open, close it back to customer list
+  const ledgerPane = document.getElementById('ledgerPane');
+  if (ledgerPane && ledgerPane.classList.contains('mobile-open')) {
+    closeLedgerMobileView();
+    return;
+  }
+});
+
 // AUTHENTICATION ENGINE
 function checkDeviceAuthorization() {
   const isAuth = localStorage.getItem('SGM_DEVICE_AUTHORIZED');
@@ -766,7 +792,25 @@ function startAppLifecycle() {
   renderCustomerList();
   calculateGrandTotals();
   applyCalcPresetsUI();
+  initAlertTogglesUI();
   forceCloudFetch(false);
+}
+
+// ================= STEP 2: WHATSAPP & SMS ALERT TOGGLES (DEFAULT OFF + REMEMBER CHOICE) =================
+function initAlertTogglesUI() {
+  const savedWA = localStorage.getItem('SGM_ALERT_WA_PREF');
+  const savedSMS = localStorage.getItem('SGM_ALERT_SMS_PREF');
+
+  // By default OFF (false) until explicitly turned on by user
+  document.getElementById('chkWhatsAppAlert').checked = (savedWA === 'true');
+  document.getElementById('chkSMSAlert').checked = (savedSMS === 'true');
+}
+
+function persistAlertToggles() {
+  const waVal = document.getElementById('chkWhatsAppAlert').checked;
+  const smsVal = document.getElementById('chkSMSAlert').checked;
+  localStorage.setItem('SGM_ALERT_WA_PREF', waVal ? 'true' : 'false');
+  localStorage.setItem('SGM_ALERT_SMS_PREF', smsVal ? 'true' : 'false');
 }
 
 // Auto-Launch Setup
@@ -1087,7 +1131,6 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
           txMap.set(rTx.id, rTx);
         } else {
           const lTx = txMap.get(rTx.id);
-          // Compare edit version timestamp: ALWAYS keep the newer edit!
           const rTime = Math.max(Number(rTx.updatedAt) || 0, Number(rTx.timestamp) || 0);
           const lTime = Math.max(Number(lTx.updatedAt) || 0, Number(lTx.timestamp) || 0);
           
@@ -1105,7 +1148,6 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
       lCust.balance = getCustomerBalanceFromTxs(mergedTxs);
       lCust.updatedAt = Math.max(lCust.updatedAt || 0, rCust.updatedAt || 0);
 
-      // Keep local vault in sync with merged edits
       mergedTxs.forEach(t => recordTransactionInVault(fid, cid, t, 'ADD_EDIT'));
     }
   }
@@ -1350,6 +1392,7 @@ function openAddFirmModal() {
   document.getElementById('firmInpName').value = '';
   document.getElementById('btnDeleteFirm').style.display = 'none';
   document.getElementById('firmModal').style.display = 'flex';
+  pushModalState('firmModal');
 }
 
 function openEditFirmModal(fid) {
@@ -1358,6 +1401,7 @@ function openEditFirmModal(fid) {
   document.getElementById('firmInpName').value = Store.firms[fid].name;
   document.getElementById('btnDeleteFirm').style.display = Object.keys(Store.firms).length > 1 ? 'block' : 'none';
   document.getElementById('firmModal').style.display = 'flex';
+  pushModalState('firmModal');
 }
 
 function closeFirmModal() {
@@ -1431,6 +1475,7 @@ function openFirmSwitcherModal() {
     list.appendChild(btn);
   }
   document.getElementById('mobileFirmSwitcherModal').style.display = 'flex';
+  pushModalState('mobileFirmSwitcherModal');
 }
 
 function closeMobileFirmSwitcher() {
@@ -1546,6 +1591,7 @@ function selectCustomer(cid) {
 
   if (window.innerWidth <= 900) {
     document.getElementById('ledgerPane').classList.add('mobile-open');
+    pushModalState('ledgerPaneMobile');
   }
 }
 
@@ -1696,6 +1742,9 @@ function openTransactionModal(type) {
   document.getElementById('calcEntryNote').value = '';
   document.getElementById('calcSettingsPanel').style.display = 'none';
   
+  // Re-apply saved Alert preferences
+  initAlertTogglesUI();
+
   const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -1729,6 +1778,7 @@ function openTransactionModal(type) {
     warnEl.style.display = 'none';
   }
   document.getElementById('entryCalcModal').style.display = 'flex';
+  pushModalState('entryCalcModal');
 }
 
 function editTransaction(txId) {
@@ -1746,6 +1796,9 @@ function editTransaction(txId) {
   document.getElementById('calcEntryNote').value = tx.note || '';
   document.getElementById('calcSettingsPanel').style.display = 'none';
   document.getElementById('calcDefaulterWarning').style.display = 'none';
+  
+  // Re-apply saved Alert preferences
+  initAlertTogglesUI();
 
   if (tx.timestamp) {
     const d = new Date(Number(tx.timestamp));
@@ -1764,6 +1817,7 @@ function editTransaction(txId) {
     heading.style.color = 'var(--primary)';
   }
   document.getElementById('entryCalcModal').style.display = 'flex';
+  pushModalState('entryCalcModal');
 }
 
 function deleteTransaction(txId) {
@@ -1828,7 +1882,7 @@ function submitTransactionEntry() {
       tx.dateStr = dateStr;
       tx.timeStr = timeStr;
       tx.timestamp = txTimestamp;
-      tx.updatedAt = currentActionTime; // CRITICAL: Updates live version timestamp!
+      tx.updatedAt = currentActionTime;
       recordTransactionInVault(Store.activeFirmId, selectedCustomerId, tx, 'ADD_EDIT');
 
       if (currentTxType === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) + amt).toFixed(2);
@@ -1947,7 +2001,7 @@ function sendWhatsAppReminder() {
   const dtStr = getFormattedDateTime();
 
   const msg = `Dt:- *${dtStr}*\n\n` +
-              ` सादर नमस्कार,\n\n` +
+              `सादर नमस्कार,\n\n` +
               `आशा है कि आप स्वस्थ और प्रसन्न हैं।\n` +
               `आपसे एक विनम्र निवेदन है — हमारे पिछले लेन-देन से संबंधित भुगतान अब तक लंबित है।\n\n` +
               `हमारा व्यवसाय निरंतर संचालन और सेवाओं की गुणवत्ता बनाए रखने के लिए समय पर भुगतानों पर निर्भर है। अतः आपसे अनुरोध है कि कृपया बकाया राशि जो ( *₹${bal.toFixed(1)}* ) इतना है, इसका निपटान यथाशीघ्र करें।\n\n` +
@@ -1995,6 +2049,7 @@ function openAddCustomerModal() {
   document.getElementById('custInpOpening').value = '';
   document.getElementById('openingBalWrap').style.display = 'block';
   document.getElementById('customerModal').style.display = 'flex';
+  pushModalState('customerModal');
 }
 
 function openEditCustomerModal() {
@@ -2007,6 +2062,7 @@ function openEditCustomerModal() {
   document.getElementById('custInpPhone').value = cust.phone || '';
   document.getElementById('openingBalWrap').style.display = 'none';
   document.getElementById('customerModal').style.display = 'flex';
+  pushModalState('customerModal');
 }
 
 function closeCustomerModal() {
@@ -2282,7 +2338,7 @@ function printCustomerLedgerPDF() {
       </div>
     </div>
 
-    <table style="width:100%; border-collapse:collapse; text-left;">
+    <table style="width:100%; border-collapse:collapse; text-align:left;">
       <thead>
         <tr style="border-bottom:2px solid #cbd5e1; font-size:11px; font-weight:800; color:#475569; text-transform:uppercase;">
           <th style="padding:6px 4px;">DATE</th>
@@ -2304,6 +2360,7 @@ function printCustomerLedgerPDF() {
 
   document.getElementById('printStatementBody').innerHTML = statementHtml;
   document.getElementById('printStatementModal').style.display = 'flex';
+  pushModalState('printStatementModal');
 }
 
 function closePrintStatementModal() {
@@ -2340,7 +2397,10 @@ function shareCustomerLedgerWA() {
 let activeSortOption = 'default';
 let activeRemindOption = 'all';
 
-function openFilterModal() { document.getElementById('filterModal').style.display = 'flex'; }
+function openFilterModal() { 
+  document.getElementById('filterModal').style.display = 'flex'; 
+  pushModalState('filterModal');
+}
 function closeFilterModal() { document.getElementById('filterModal').style.display = 'none'; }
 
 function switchFilterTab(tab) {
@@ -2407,6 +2467,7 @@ function openQrCollectionModal() {
   document.getElementById('qrUpiIdInput').value = Store.upiId;
 
   document.getElementById('qrCollectionModal').style.display = 'flex';
+  pushModalState('qrCollectionModal');
   regenerateQrCode();
 }
 
