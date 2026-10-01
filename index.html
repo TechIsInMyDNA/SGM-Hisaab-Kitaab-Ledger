@@ -2525,7 +2525,7 @@ function sendQrWhatsApp() {
   const cust = firm.customers[selectedCustomerId];
   if (!cust || !cust.phone) return alert("Customer ka mobile number nahi mila!");
 
-  const upiId = document.getElementById('qrUpiIdInput').value.trim() || "sgm144@ptyces";
+  const upiId = document.getElementById('qrUpiIdInput').value.trim() || "sgm144@ptyes";
   const amt = parseFloat(document.getElementById('qrCustomAmount').value) || parseFloat(cust.balance || 0);
   const dtStr = getFormattedDateTime();
 
