@@ -1932,7 +1932,6 @@ function sendTransactionAlertWA(cust, tx) {
   const netDue = parseFloat(cust.balance);
   const balStatus = netDue >= 0 ? `कुल बकाया राशि (Due): ₹${netDue.toFixed(1)}` : `अग्रिम राशि (Advance): ₹${Math.abs(netDue).toFixed(1)}`;
   const dtStr = getFormattedDateTime();
-  const receiptNo = `SGM-REC-${(tx.id || '').slice(-6).toUpperCase() || Date.now().toString().slice(-6)}`;
 
   let msg = "";
   if (tx.type === 'GIVEN') {
@@ -1945,14 +1944,7 @@ function sendTransactionAlertWA(cust, tx) {
           `\n${balStatus}\n\n` +
           `सप्रेम,\n` +
           `${firmName}\n` +
-          `श्री गणेश मेडिकल्स\n\n` +
-          `----------------------------------\n` +
-          `Mode Of Payment:- Bill Entry (उधार/बिल)\n` +
-          `Amount:- ₹${tx.amount}\n` +
-          `Payee Name:- ${cust.name}\n` +
-          `Payee Sign:- ${firmName}\n` +
-          `Receipt No:- ${receiptNo}\n` +
-          `----------------------------------`;
+          `श्री गणेश मेडिकल्स`;
   } else {
     msg = `*SGM PAYMENT RECEIPT*\n\n` +
           `Dt:- *${dtStr}*\n\n` +
@@ -1964,14 +1956,7 @@ function sendTransactionAlertWA(cust, tx) {
           `\n${balStatus}\n\n` +
           `सप्रेम,\n` +
           `${firmName}\n` +
-          `श्री गणेश मेडिकल्स\n\n` +
-          `----------------------------------\n` +
-          `Mode Of Payment:- Received (जमा भुगतान)\n` +
-          `Amount:- ₹${tx.amount}\n` +
-          `Payee Name:- ${cust.name}\n` +
-          `Payee Sign:- ${firmName}\n` +
-          `Receipt No:- ${receiptNo}\n` +
-          `----------------------------------`;
+          `श्री गणेश मेडिकल्स`;
   }
 
   const clean = cust.phone.replace(/[^0-9]/g, '');
