@@ -710,9 +710,7 @@ let isCloudPullCompleted = false;
 
 const COLORS = ['#ef4444', '#f97316', '#10b981', '#06b6d4', '#6366f1', '#8b5cf6', '#ec4899'];
 
-// ================= STEP 1: SMART ANDROID BACK BUTTON (FOR APPMINT / APK) =================
-let isNavigatingBackInternally = false;
-
+// ================= SMART ANDROID BACK BUTTON (FOR APPMINT / APK) =================
 function pushModalState(modalId) {
   try {
     history.pushState({ modalId: modalId, timestamp: Date.now() }, "");
@@ -720,7 +718,6 @@ function pushModalState(modalId) {
 }
 
 window.addEventListener('popstate', function(e) {
-  // 1. If any modal is open, close it first
   const openModal = document.querySelector('.modal-overlay[style*="display: flex"], .modal-overlay[style*="display:flex"]');
   if (openModal) {
     openModal.style.display = 'none';
@@ -728,7 +725,6 @@ window.addEventListener('popstate', function(e) {
     return;
   }
 
-  // 2. If mobile ledger pane is open, close it back to customer list
   const ledgerPane = document.getElementById('ledgerPane');
   if (ledgerPane && ledgerPane.classList.contains('mobile-open')) {
     closeLedgerMobileView();
@@ -796,12 +792,11 @@ function startAppLifecycle() {
   forceCloudFetch(false);
 }
 
-// ================= STEP 2: WHATSAPP & SMS ALERT TOGGLES (DEFAULT OFF + REMEMBER CHOICE) =================
+// WHATSAPP & SMS ALERT TOGGLES (DEFAULT OFF + REMEMBER CHOICE)
 function initAlertTogglesUI() {
   const savedWA = localStorage.getItem('SGM_ALERT_WA_PREF');
   const savedSMS = localStorage.getItem('SGM_ALERT_SMS_PREF');
 
-  // By default OFF (false) until explicitly turned on by user
   document.getElementById('chkWhatsAppAlert').checked = (savedWA === 'true');
   document.getElementById('chkSMSAlert').checked = (savedSMS === 'true');
 }
@@ -1074,7 +1069,7 @@ function applyVaultSafetyToStore() {
   } catch(e) { console.warn("Apply vault error:", e); }
 }
 
-// ================= BULLETPROOF TRANSACTION MERGE WITH `updatedAt` VERSIONING =================
+// BULLETPROOF TRANSACTION MERGE WITH `updatedAt` VERSIONING
 function mergeLedgerFirms(localFirms, remoteFirms) {
   if (!remoteFirms || typeof remoteFirms !== 'object') return localFirms;
   if (!localFirms || typeof localFirms !== 'object') return remoteFirms;
@@ -1241,7 +1236,7 @@ async function forceCloudFetch(isManual = false) {
   }
 }
 
-// BULLETPROOF BIDIRECTIONAL SYNC: Incremental Merge, Zero Loss, No Overwrite
+// BULLETPROOF BIDIRECTIONAL SYNC
 async function syncToCloud(isManual = false) {
   const badge = document.getElementById('liveSyncBadge');
   if (!navigator.onLine) {
@@ -1742,7 +1737,6 @@ function openTransactionModal(type) {
   document.getElementById('calcEntryNote').value = '';
   document.getElementById('calcSettingsPanel').style.display = 'none';
   
-  // Re-apply saved Alert preferences
   initAlertTogglesUI();
 
   const now = new Date();
@@ -1797,7 +1791,6 @@ function editTransaction(txId) {
   document.getElementById('calcSettingsPanel').style.display = 'none';
   document.getElementById('calcDefaulterWarning').style.display = 'none';
   
-  // Re-apply saved Alert preferences
   initAlertTogglesUI();
 
   if (tx.timestamp) {
@@ -1931,41 +1924,54 @@ function getFormattedDateTime() {
   return `${d}/${m}/${y} ${t}`;
 }
 
+// ================= PROFESSIONAL SOBER WHATSAPP TEMPLATES (IMAGE MATCHED) =================
+
 function sendTransactionAlertWA(cust, tx) {
   const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   const firmName = firm.name || "Agrawal Shubham";
   const netDue = parseFloat(cust.balance);
   const balStatus = netDue >= 0 ? `कुल बकाया राशि (Due): ₹${netDue.toFixed(1)}` : `अग्रिम राशि (Advance): ₹${Math.abs(netDue).toFixed(1)}`;
   const dtStr = getFormattedDateTime();
+  const receiptNo = `SGM-REC-${(tx.id || '').slice(-6).toUpperCase() || Date.now().toString().slice(-6)}`;
 
   let msg = "";
   if (tx.type === 'GIVEN') {
-    msg = `Dt:- *${dtStr}*\n\n` +
-          `नमस्ते ${cust.name} जी,\n\n` +
+    msg = `*SGM BILL / TRANSACTION RECEIPT*\n\n` +
+          `Dt:- *${dtStr}*\n\n` +
+          `सादर नमस्कार ${cust.name} जी,\n\n` +
           `हमारे साथ व्यवहार करने के लिए आपका हृदय से आभार।\n` +
           `आपके खाते में ( *₹${tx.amount}* ) इतना लेने का (बिल/सामग्री) दर्ज कर दिया गया है।\n` +
           (tx.note ? `विवरण (Note): ${tx.note}\n` : '') +
           `\n${balStatus}\n\n` +
           `सप्रेम,\n` +
-          `${firmName}\n\n` +
-          `Mode Of Payment:- Bill Entry\n` +
+          `${firmName}\n` +
+          `श्री गणेश मेडिकल्स\n\n` +
+          `----------------------------------\n` +
+          `Mode Of Payment:- Bill Entry (उधार/बिल)\n` +
           `Amount:- ₹${tx.amount}\n` +
           `Payee Name:- ${cust.name}\n` +
-          `Payee Sign:- ${firmName}`;
+          `Payee Sign:- ${firmName}\n` +
+          `Receipt No:- ${receiptNo}\n` +
+          `----------------------------------`;
   } else {
-    msg = `Dt:- *${dtStr}*\n\n` +
-          `नमस्ते ${cust.name} जी,\n\n` +
+    msg = `*SGM PAYMENT RECEIPT*\n\n` +
+          `Dt:- *${dtStr}*\n\n` +
+          `सादर नमस्कार ${cust.name} जी,\n\n` +
           `हमारे साथ व्यवहार करने के लिए आपका कोटि-कोटि आभार।\n` +
           `आपकी ओर से ( *₹${tx.amount}* ) का भुगतान सफलतापूर्वक जमा कर दिया गया है।\n` +
           `समय पर भुगतान और विश्वास बनाए रखने के लिए धन्यवाद।\n` +
-          (tx.note ? `विवरण: ${tx.note}\n` : '') +
+          (tx.note ? `विवरण (Note): ${tx.note}\n` : '') +
           `\n${balStatus}\n\n` +
           `सप्रेम,\n` +
-          `${firmName}\n\n` +
-          `Mode Of Payment:- Received\n` +
+          `${firmName}\n` +
+          `श्री गणेश मेडिकल्स\n\n` +
+          `----------------------------------\n` +
+          `Mode Of Payment:- Received (जमा भुगतान)\n` +
           `Amount:- ₹${tx.amount}\n` +
           `Payee Name:- ${cust.name}\n` +
-          `Payee Sign:- ${firmName}`;
+          `Payee Sign:- ${firmName}\n` +
+          `Receipt No:- ${receiptNo}\n` +
+          `----------------------------------`;
   }
 
   const clean = cust.phone.replace(/[^0-9]/g, '');
@@ -1999,20 +2005,29 @@ function sendWhatsAppReminder() {
   if (bal <= 0) return alert("Koi baki due payment nahi hai!");
   const firmName = firm.name || "Agrawal Shubham";
   const dtStr = getFormattedDateTime();
+  const upiId = Store.upiId || "sgm144@ptyces";
+  const receiptNo = `SGM-REM-${Date.now().toString().slice(-6)}`;
 
-  const msg = `Dt:- *${dtStr}*\n\n` +
+  const upiPayLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(firmName)}&am=${bal.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Payment to ' + firmName)}`;
+
+  const msg = `*SGM PAYMENT REMINDER CUM RECEIPT*\n\n` +
+              `Dt:- *${dtStr}*\n\n` +
               `सादर नमस्कार,\n\n` +
-              `आशा है कि आप स्वस्थ और प्रसन्न हैं।\n` +
-              `आपसे एक विनम्र निवेदन है — हमारे पिछले लेन-देन से संबंधित भुगतान अब तक लंबित है।\n\n` +
+              `आशा है कि आप स्वस्थ और प्रसन्न हैं। आपसे एक विनम्र निवेदन है — हमारे पिछले लेन-देन से संबंधित भुगतान अब तक लंबित है।\n\n` +
               `हमारा व्यवसाय निरंतर संचालन और सेवाओं की गुणवत्ता बनाए रखने के लिए समय पर भुगतानों पर निर्भर है। अतः आपसे अनुरोध है कि कृपया बकाया राशि जो ( *₹${bal.toFixed(1)}* ) इतना है, इसका निपटान यथाशीघ्र करें।\n\n` +
-              `यदि भुगतान पहले ही हो चुका है, तो कृपया इसे अनदेखा समझें।\n` +
-              `आपके सहयोग हेतु हम सदैव आभारी रहेंगे।\n\n` +
+              `यदि भुगतान पहले ही हो चुका है, तो कृपया इसे अनदेखा समझें। आपके सहयोग हेतु हम सदैव आभारी रहेंगे।\n\n` +
+              `*UPI / Online भुगतान हेतु लिंक (Click to Pay):*\n` +
+              `${upiPayLink}\n\n` +
               `सप्रेम,\n` +
-              `${firmName}\n\n` +
+              `${firmName} /\n` +
+              `श्री गणेश मेडिकल्स\n\n` +
+              `----------------------------------\n` +
               `Mode Of Payment:- UPI / Cash / Bank\n` +
               `Amount:- ₹${bal.toFixed(1)}\n` +
               `Payee Name:- ${cust.name}\n` +
-              `Payee Sign:- ${firmName}`;
+              `Payee Sign:- ${firmName}\n` +
+              `Receipt No:- ${receiptNo}\n` +
+              `----------------------------------`;
 
   const clean = cust.phone.replace(/[^0-9]/g, '');
   const ph = clean.length === 10 ? '91' + clean : clean;
@@ -2375,6 +2390,7 @@ function shareCustomerLedgerWA() {
 
   const bal = parseFloat(cust.balance || 0);
   const balLabel = bal > 0 ? `Kul Baki Hisaab (Due): ₹${bal.toFixed(1)}` : (bal < 0 ? `Advance Balance: ₹${Math.abs(bal).toFixed(1)}` : `Hisaab Settled (₹0)`);
+  const dtStr = getFormattedDateTime();
   
   let txList = '';
   const txs = cust.transactions || [];
@@ -2383,11 +2399,16 @@ function shareCustomerLedgerWA() {
     txList += `• ${t.dateStr}: ${t.type === 'GIVEN' ? 'Given ₹' : 'Received ₹'}${t.amount} ${t.note ? '('+t.note+')' : ''}\n`;
   });
 
-  const msg = `Namaste ${cust.name} ji,\n` +
-              `Aapka *${firm.name}* par khata vivaran:\n\n` +
+  const msg = `*SGM CUSTOMER ACCOUNT STATEMENT*\n\n` +
+              `Dt:- *${dtStr}*\n\n` +
+              `सादर नमस्कार ${cust.name} जी,\n` +
+              `आपका *${firm.name}* पर खाता विवरण:\n\n` +
               `*${balLabel}*\n\n` +
-              (recent.length ? `*Recent Entries:*\n${txList}\n` : '') +
-              `Kripya jald se jald hisaab clear karein.\nDhanyawad!\n- ${firm.name}`;
+              (recent.length ? `*हाल ही के लेन-देन (Recent Entries):*\n${txList}\n` : '') +
+              `कृपया समय पर हिसाब क्लियर करें। आपके सहयोग हेतु हम सदैव आभारी रहेंगे।\n\n` +
+              `सप्रेम,\n` +
+              `${firm.name}\n` +
+              `श्री गणेश मेडिकल्स`;
 
   const clean = cust.phone.replace(/[^0-9]/g, '');
   const ph = clean.length === 10 ? '91' + clean : clean;
@@ -2507,22 +2528,29 @@ function sendQrWhatsApp() {
   const upiId = document.getElementById('qrUpiIdInput').value.trim() || "sgm144@ptyces";
   const amt = parseFloat(document.getElementById('qrCustomAmount').value) || parseFloat(cust.balance || 0);
   const dtStr = getFormattedDateTime();
+  const receiptNo = `SGM-QR-${Date.now().toString().slice(-6)}`;
 
   const upiPayLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(firm.name)}&am=${amt.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Payment to ' + firm.name)}`;
 
-  const msg = `Dt:- *${dtStr}*\n\n` +
-              `सादर नमस्कार ${cust.name} जी,\n\n` +
-              `आशा है कि आप प्रसन्न और स्वस्थ हैं।\n` +
-              `आपके खाते की कुल बकाया राशि ( *₹${amt.toFixed(1)}* ) है।\n\n` +
-              `आप नीचे दिए गए UPI लिंक से किसी भी ऐप (GPay / PhonePe / Paytm) द्वारा डायरेक्ट पेमेंट कर सकते हैं:\n` +
+  const msg = `*SGM PAYMENT REMINDER CUM RECEIPT*\n\n` +
+              `Dt:- *${dtStr}*\n\n` +
+              `सादर नमस्कार,\n\n` +
+              `आशा है कि आप स्वस्थ और प्रसन्न हैं। आपसे एक विनम्र निवेदन है — हमारे पिछले लेन-देन से संबंधित भुगतान अब तक लंबित है।\n\n` +
+              `हमारा व्यवसाय निरंतर संचालन और सेवाओं की गुणवत्ता बनाए रखने के लिए समय पर भुगतानों पर निर्भर है। अतः आपसे अनुरोध है कि कृपया बकाया राशि जो ( *₹${amt.toFixed(1)}* ) इतना है, इसका निपटान यथाशीघ्र करें।\n\n` +
+              `यदि भुगतान पहले ही हो चुका है, तो कृपया इसे अनदेखा समझें। आपके सहयोग हेतु हम सदैव आभारी रहेंगे।\n\n` +
+              `*ऑनलाइन UPI QR भुगतान लिंक (Click to Pay):*\n` +
               `${upiPayLink}\n\n` +
               `UPI ID: *${upiId}*\n\n` +
               `सप्रेम,\n` +
-              `${firm.name}\n\n` +
-              `Mode Of Payment:- UPI QR\n` +
+              `${firm.name} /\n` +
+              `श्री गणेश मेडिकल्स\n\n` +
+              `----------------------------------\n` +
+              `Mode Of Payment:- UPI QR / Online\n` +
               `Amount:- ₹${amt.toFixed(1)}\n` +
               `Payee Name:- ${cust.name}\n` +
-              `Payee Sign:- ${firm.name}`;
+              `Payee Sign:- ${firm.name}\n` +
+              `Receipt No:- ${receiptNo}\n` +
+              `----------------------------------`;
 
   const clean = cust.phone.replace(/[^0-9]/g, '');
   const ph = clean.length === 10 ? '91' + clean : clean;
