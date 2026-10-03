@@ -1872,6 +1872,11 @@ function submitTransactionEntry() {
       if (tx.type === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) - oldAmt).toFixed(2);
       else cust.balance = (parseFloat(cust.balance || 0) + oldAmt).toFixed(2);
 
+            const hasChanged = (oldAmt !== amt) || (tx.note !== note) || (tx.type !== currentTxType) || (tx.dateStr !== dateStr);
+      if (hasChanged) {
+        tx.isEdited = true;
+      }
+
       tx.amount = amt;
       tx.note = note;
       tx.type = currentTxType;
@@ -1879,8 +1884,8 @@ function submitTransactionEntry() {
       tx.timeStr = timeStr;
       tx.timestamp = txTimestamp;
       tx.updatedAt = currentActionTime;
-      tx.isEdited = true;
       recordTransactionInVault(Store.activeFirmId, selectedCustomerId, tx, 'ADD_EDIT');
+
 
       if (currentTxType === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) + amt).toFixed(2);
       else cust.balance = (parseFloat(cust.balance || 0) - amt).toFixed(2);
