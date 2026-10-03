@@ -1649,13 +1649,14 @@ function renderLedgerView(cid) {
           <div style="display:flex; align-items:center; gap:8px;">
             <div class="bubble-time">
               ${tx.timeStr || ''}
-              ${tx.isEdited ? '<span style="color:#d97706; font-size:10px; font-weight:800; background:#fef3c7; padding:1px 5px; border-radius:4px; margin-left:4px; border:1px solid #fde68a;"><i class="fa-solid fa-pen" style="font-size:9px;"></i> Edited</span>' : ''}
+              ${tx.isEdited ? `<span style="color:#d97706; font-size:10px; font-weight:800; background:#fef3c7; padding:1px 6px; border-radius:4px; margin-left:4px; border:1px solid #fde68a;"><i class="fa-solid fa-pen" style="font-size:9px;"></i> Edited ${tx.editedAtStr || ''}</span>` : ''}
+            </div>
             </div>
             <div style="display:inline-flex; align-items:center; gap:8px; margin-left:4px;">
-              <button onclick="editTransaction('${tx.id}')" title="Edit Entry" style="background:#eff6ff; border:1px solid #bfdbfe; color:#2563eb; padding:2px 7px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
+              <button onclick="editTransaction('${tx.id}')" title="Edit Entry" style="background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
                 <i class="fa-solid fa-pen-to-square"></i> Edit
               </button>
-              <button onclick="deleteTransaction('${tx.id}')" title="Delete Entry (PIN: 1441)" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:2px 7px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
+              <button onclick="deleteTransaction('${tx.id}')" title="Delete Entry (PIN: 1441)" style="background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
                 <i class="fa-solid fa-trash"></i>
               </button>
             </div>
@@ -1872,11 +1873,13 @@ function submitTransactionEntry() {
       if (tx.type === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) - oldAmt).toFixed(2);
       else cust.balance = (parseFloat(cust.balance || 0) + oldAmt).toFixed(2);
 
-            const hasChanged = (oldAmt !== amt) || (tx.note !== note) || (tx.type !== currentTxType) || (tx.dateStr !== dateStr);
+                  const hasChanged = (oldAmt !== amt) || (tx.note !== note) || (tx.type !== currentTxType) || (tx.dateStr !== dateStr);
       if (hasChanged) {
         tx.isEdited = true;
+        tx.editedAtStr = getFormattedDateTime();
       }
 
+      
       tx.amount = amt;
       tx.note = note;
       tx.type = currentTxType;
