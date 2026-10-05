@@ -2005,25 +2005,24 @@ function sendWhatsAppReminder() {
 
   const upiPayLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(firmName)}&am=${bal.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Payment to ' + firmName)}`;
 
-  const msg = `*SGM PAYMENT REMINDER CUM RECEIPT*\n\n` +
-              `Dt:- *${dtStr}*\n\n` +
-              `सादर नमस्कार,\n\n` +
-              `आशा है कि आप स्वस्थ और प्रसन्न हैं। आपसे एक विनम्र निवेदन है — हमारे पिछले लेन-देन से संबंधित भुगतान अब तक लंबित है।\n\n` +
-              `हमारा व्यवसाय निरंतर संचालन और सेवाओं की गुणवत्ता बनाए रखने के लिए समय पर भुगतानों पर निर्भर है। अतः आपसे अनुरोध है कि कृपया बकाया राशि जो ( *₹${bal.toFixed(1)}* ) इतना है, इसका निपटान यथाशीघ्र करें।\n\n` +
-              `यदि भुगतान पहले ही हो चुका है, तो कृपया इसे अनदेखा समझें। आपके सहयोग हेतु हम सदैव आभारी रहेंगे।\n\n` +
-              `*UPI / Online भुगतान हेतु लिंक (Click to Pay):*\n` +
-              `${upiPayLink}\n\n` +
-              `सप्रेम,\n` +
-              `${firmName} /\n` +
-              `श्री गणेश मेडिकल्स\n\n` +
-              `----------------------------------\n` +
-              `Mode Of Payment:- UPI / Cash / Bank\n` +
-              `Amount:- ₹${bal.toFixed(1)}\n` +
-              `Payee Name:- ${cust.name}\n` +
-              `Payee Sign:- ${firmName}\n` +
-              `Receipt No:- ${receiptNo}\n` +
-              `----------------------------------`;
+  const msg = 
+`Dt:- *${dtStr}*
 
+सादर नमस्कार,
+
+आशा है कि आप स्वस्थ और प्रसन्न हैं। आपसे एक विनम्र निवेदन है — हमारे पिछले लेन-देन से संबंधित भुगतान अब तक लंबित है।
+
+हमारा व्यवसाय निरंतर संचालन और सेवाओं की गुणवत्ता बनाए रखने के लिए समय पर भुगतानों पर निर्भर है। अतः आपसे अनुरोध है कि कृपया बकाया राशि जो ( *₹${bal}* ) इतना है, इसका निपटान यथाशीघ्र करें।
+
+यदि भुगतान पहले ही हो चुका है, तो कृपया इसे अनदेखा समझें। आपके सहयोग हेतु हम सदैव आभारी रहेंगे।
+
+*भुगतान हेतु UPI विवरण (GPay / PhonePe / Paytm / BHIM):*
+• UPI ID: *${upiId}*
+• बकाया राशि: *₹${bal}*
+
+सप्रेम,
+${firmName} /
+श्री गणेश मेडिकल्स`;
   const clean = cust.phone.replace(/[^0-9]/g, '');
   const ph = clean.length === 10 ? '91' + clean : clean;
   window.open(`https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}`, '_blank');
