@@ -2539,6 +2539,72 @@ function sendQrWhatsApp() {
   const ph = clean.length === 10 ? '91' + clean : clean;
   window.open(`https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}`, '_blank');
 }
+  // Desktop Fast Keyboard Shortcuts
+document.addEventListener('keydown', function(e) {
+  const activeEl = document.activeElement;
+  const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+
+  // 1. Agar Modal khula hai aur input me typing chal rahi hai, tab ENTER se SAVE
+  if (e.key === 'Enter' && isTyping) {
+    const saveBtn = Array.from(document.querySelectorAll('button')).find(btn => {
+      const txt = (btn.innerText || btn.textContent || '').trim().toLowerCase();
+      const isSave = txt.includes('save') || txt.includes('jama') || txt.includes('udhaar') || txt.includes('submit');
+      return isSave && btn.offsetParent !== null;
+    });
+    if (saveBtn) {
+      e.preventDefault();
+      saveBtn.click();
+      return;
+    }
+  }
+
+  // 2. Agar user kisi text box me type kar raha hai, toh 'F', 'G', 'P' normal character banenge
+  if (isTyping) return;
+
+  const key = e.key.toLowerCase();
+
+  // 'f' dabane par Search/Filter par jump
+  if (key === 'f') {
+    const searchInput = document.querySelector('input[type="search"], input[placeholder*="Search" i], input[placeholder*="filter" i], input[placeholder*="naam" i], input[placeholder*="Name" i]');
+    if (searchInput) {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    }
+  }
+
+  // 'g' dabane par Given Udhaar modal open
+  if (key === 'g') {
+    const givenBtn = Array.from(document.querySelectorAll('button')).find(btn => {
+      const txt = (btn.innerText || btn.textContent || '').toLowerCase();
+      return (txt.includes('given') || txt.includes('udhaar') || txt.includes('gave')) && btn.offsetParent !== null;
+    });
+    if (givenBtn) {
+      e.preventDefault();
+      givenBtn.click();
+      setTimeout(() => {
+        const amtInput = document.querySelector('input[type="number"], input[placeholder*="Amount" i]');
+        if (amtInput) amtInput.focus();
+      }, 200);
+    }
+  }
+
+  // 'p' dabane par Payment Received (Jama) modal open
+  if (key === 'p') {
+    const paymentBtn = Array.from(document.querySelectorAll('button')).find(btn => {
+      const txt = (btn.innerText || btn.textContent || '').toLowerCase();
+      return (txt.includes('received') || txt.includes('jama') || txt.includes('got') || txt.includes('payment')) && btn.offsetParent !== null;
+    });
+    if (paymentBtn) {
+      e.preventDefault();
+      paymentBtn.click();
+      setTimeout(() => {
+        const amtInput = document.querySelector('input[type="number"], input[placeholder*="Amount" i]');
+        if (amtInput) amtInput.focus();
+      }, 200);
+    }
+  }
+});
 </script>
 </body>
 </html>
