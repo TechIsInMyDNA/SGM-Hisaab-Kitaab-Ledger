@@ -793,7 +793,7 @@ function startAppLifecycle() {
     // App open hone ke theek 144 seconds baad backup execute karega
   setTimeout(() => {
     triggerDailyAutoBackup();
-  }, 144000);
+  }, 5000);
 }
 
 // WHATSAPP & SMS ALERT TOGGLES (DEFAULT OFF + REMEMBER CHOICE)
@@ -2207,6 +2207,7 @@ function exportFullJSONBackup() {
 const GOOGLE_BACKUP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMvvMWrVs9WIvVMydMiTI6RCp9wJeUV4R_OpMfO7piRlgEDx7ZQXdqeRuB-7fyAmkv3w/exec";
 
 function triggerDailyAutoBackup() {
+    alert("1. Backup Function Call Ho Gaya!");
   // 1. Agar internet nahi hai toh execute mat karo
   if (!navigator.onLine) {
     console.log("Auto Backup: Internet offline hai, backup skip kiya.");
@@ -2231,7 +2232,7 @@ function triggerDailyAutoBackup() {
     console.log("Auto Backup: Data abhi poora load nahi hua, backup abort kiya.");
     return;
   }
-
+  alert("2. Drive par request bhej raha hoon...");
   // 5. Safe Data Upload
   fetch(GOOGLE_BACKUP_SCRIPT_URL, {
     method: 'POST',
