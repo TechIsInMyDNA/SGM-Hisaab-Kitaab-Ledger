@@ -2226,12 +2226,12 @@ function triggerDailyAutoBackup() {
     return;
   }
 
-  // 4. Strict Data Safety Check:
-  // Check karo ki Store bana hai ya nahi, aur usme firms data mojood hai ya nahi
-  if (!window.Store || !Store.firms || Object.keys(Store.firms).length === 0) {
-    console.log("Auto Backup: Data abhi poora load nahi hua, backup abort kiya.");
+    // 4. Correct Data Safety Check
+  if (!window.Store || Object.keys(Store).length === 0) {
+    alert("Store khali mila!");
     return;
   }
+  
   alert("2. Drive par request bhej raha hoon...");
   // 5. Safe Data Upload
   fetch(GOOGLE_BACKUP_SCRIPT_URL, {
