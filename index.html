@@ -2187,7 +2187,14 @@ function exportFullJSONBackup() {
   const jsonStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(Store, null, 2));
   const a = document.createElement('a');
   a.href = jsonStr;
-  a.download = `SGM_Full_Ledger_Backup_${new Date().toISOString().slice(0,10)}.json`;
+  
+  // Exact Date + 24-hr Time (Jaise: MANUAL_SGM_Backup_2026-10-06_23-10.json)
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10);
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  a.download = `MANUAL_SGM_Backup_${dateStr}_${hours}-${minutes}.json`;
+  
   document.body.appendChild(a);
   a.click();
   a.remove();
