@@ -2199,6 +2199,31 @@ function exportFullJSONBackup() {
   a.click();
   a.remove();
 }
+// Google Apps Script Web App URL yahan paste karein
+const GOOGLE_BACKUP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMvvMWrVs9WIvVMydMiTI6RCp9wJeUV4R_OpMfO7piRlgEDx7ZQXdqeRuB-7fyAmkv3w/exec";
+
+function triggerDailyAutoBackup() {
+  if (!GOOGLE_BACKUP_SCRIPT_URL || GOOGLE_BACKUP_SCRIPT_URL.includes("PASTE_YOUR_COPIED")) return;
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  // Agar aaj ka backup pehle hi upload ho chuka hai toh dobara upload nahi karega
+  if (localStorage.getItem('sgm_last_auto_backup') === todayStr) return;
+
+  // Agar Store khali hai toh backup trigger na ho
+  if (!window.Store || !Store.firms) return;
+
+  fetch(GOOGLE_BACKUP_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Store)
+  }).then(() => {
+    localStorage.setItem('sgm_last_auto_backup', todayStr);
+    console.log("Drive par Daily Auto Backup successfully send ho gaya!");
+  }).catch(err => {
+    console.error("Auto Backup Error:", err);
+  });
+}
 
 function triggerRestoreJSON() {
   document.getElementById('restoreFileInput').click();
