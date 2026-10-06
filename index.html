@@ -790,7 +790,10 @@ function startAppLifecycle() {
   applyCalcPresetsUI();
   initAlertTogglesUI();
   forceCloudFetch(false);
-  triggerDailyAutoBackup();
+    // App open hone ke theek 144 seconds baad backup execute karega
+  setTimeout(() => {
+    triggerDailyAutoBackup();
+  }, 144000);
 }
 
 // WHATSAPP & SMS ALERT TOGGLES (DEFAULT OFF + REMEMBER CHOICE)
