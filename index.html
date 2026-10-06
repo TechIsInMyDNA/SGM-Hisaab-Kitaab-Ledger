@@ -2207,7 +2207,7 @@ function exportFullJSONBackup() {
 const GOOGLE_BACKUP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMvvMWrVs9WIvVMydMiTI6RCp9wJeUV4R_OpMfO7piRlgEDx7ZQXdqeRuB-7fyAmkv3w/exec";
 
 function triggerDailyAutoBackup() {
-    alert("1. Backup Function Call Ho Gaya!");
+    alert("Backup Check: " + localStorage.getItem('sgm_last_auto_backup') + " | Firms: " + (window.Store && Store.firms ? Object.keys(Store.firms).length : 'Nahi Mila'));
   // 1. Agar internet nahi hai toh execute mat karo
   if (!navigator.onLine) {
     console.log("Auto Backup: Internet offline hai, backup skip kiya.");
