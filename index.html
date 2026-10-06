@@ -2539,13 +2539,50 @@ function sendQrWhatsApp() {
   const ph = clean.length === 10 ? '91' + clean : clean;
   window.open(`https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}`, '_blank');
 }
-  // Desktop Fast Keyboard Shortcuts
+  // Desktop Fast Keyboard Shortcuts (with List Arrow Navigation)
+let selectedCustIndex = -1;
+
 document.addEventListener('keydown', function(e) {
   const activeEl = document.activeElement;
+  const isSearchInput = activeEl && activeEl.placeholder && /search|filter|naam|name/i.test(activeEl.placeholder);
   const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
 
-  // 1. Agar Modal khula hai aur input me typing chal rahi hai, tab ENTER se SAVE
-  if (e.key === 'Enter' && isTyping) {
+  const getCustomerCards = () => {
+    return Array.from(document.querySelectorAll('div, li')).filter(el => {
+      return el.offsetParent !== null && 
+             (el.className.includes('customer') || el.className.includes('card') || el.onclick || el.getAttribute('data-id')) &&
+             el.innerText && /₹|lena|diya|udhaar/i.test(el.innerText);
+    });
+  };
+
+  // 1. Search Box Navigation (Arrow Keys + Enter)
+  if (isSearchInput) {
+    const cards = getCustomerCards();
+    if (cards.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedCustIndex = (selectedCustIndex + 1) % cards.length;
+        highlightCard(cards, selectedCustIndex);
+        return;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedCustIndex = (selectedCustIndex - 1 + cards.length) % cards.length;
+        highlightCard(cards, selectedCustIndex);
+        return;
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const targetIdx = selectedCustIndex >= 0 ? selectedCustIndex : 0;
+        if (cards[targetIdx]) {
+          cards[targetIdx].click();
+          activeEl.blur();
+        }
+        return;
+      }
+    }
+  }
+
+  // 2. Modal typing me ENTER se direct SAVE
+  if (e.key === 'Enter' && isTyping && !isSearchInput) {
     const saveBtn = Array.from(document.querySelectorAll('button')).find(btn => {
       const txt = (btn.innerText || btn.textContent || '').trim().toLowerCase();
       const isSave = txt.includes('save') || txt.includes('jama') || txt.includes('udhaar') || txt.includes('submit');
@@ -2558,22 +2595,22 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
-  // 2. Agar user kisi text box me type kar raha hai, toh 'F', 'G', 'P' normal character banenge
   if (isTyping) return;
 
   const key = e.key.toLowerCase();
 
-  // 'f' dabane par Search/Filter par jump
+  // 'f' se Search Bar focus
   if (key === 'f') {
     const searchInput = document.querySelector('input[type="search"], input[placeholder*="Search" i], input[placeholder*="filter" i], input[placeholder*="naam" i], input[placeholder*="Name" i]');
     if (searchInput) {
       e.preventDefault();
+      selectedCustIndex = -1;
       searchInput.focus();
       searchInput.select();
     }
   }
 
-  // 'g' dabane par Given Udhaar modal open
+  // 'g' se Given Udhaar open
   if (key === 'g') {
     const givenBtn = Array.from(document.querySelectorAll('button')).find(btn => {
       const txt = (btn.innerText || btn.textContent || '').toLowerCase();
@@ -2589,7 +2626,7 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
-  // 'p' dabane par Payment Received (Jama) modal open
+  // 'p' se Payment Received open
   if (key === 'p') {
     const paymentBtn = Array.from(document.querySelectorAll('button')).find(btn => {
       const txt = (btn.innerText || btn.textContent || '').toLowerCase();
@@ -2605,6 +2642,19 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
+
+function highlightCard(cards, idx) {
+  cards.forEach((c, i) => {
+    if (i === idx) {
+      c.style.outline = '2px solid #00a884';
+      c.style.backgroundColor = 'rgba(0, 168, 132, 0.1)';
+      c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } else {
+      c.style.outline = '';
+      c.style.backgroundColor = '';
+    }
+  });
+}
 </script>
 </body>
 </html>
