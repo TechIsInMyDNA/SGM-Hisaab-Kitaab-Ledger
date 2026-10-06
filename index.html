@@ -2207,45 +2207,29 @@ function exportFullJSONBackup() {
 const GOOGLE_BACKUP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMvvMWrVs9WIvVMydMiTI6RCp9wJeUV4R_OpMfO7piRlgEDx7ZQXdqeRuB-7fyAmkv3w/exec";
 
 function triggerDailyAutoBackup() {
-    alert("Backup Check: " + localStorage.getItem('sgm_last_auto_backup') + " | Firms: " + (window.Store && Store.firms ? Object.keys(Store.firms).length : 'Nahi Mila'));
-  // 1. Agar internet nahi hai toh execute mat karo
-  if (!navigator.onLine) {
-    console.log("Auto Backup: Internet offline hai, backup skip kiya.");
-    return;
-  }
-
-  // 2. URL validation check
-  if (!GOOGLE_BACKUP_SCRIPT_URL || GOOGLE_BACKUP_SCRIPT_URL.includes("PASTE_YOUR_COPIED")) {
-    return;
-  }
+  if (!navigator.onLine) return;
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  
-  // 3. Agar aaj ka backup pehle hi ho chuka hai toh dobara mat bhejo
-  if (localStorage.getItem('sgm_last_auto_backup') === todayStr) {
-    return;
-  }
+  if (localStorage.getItem('sgm_last_auto_backup') === todayStr) return;
 
-    // 4. Correct Data Safety Check
-  if (!window.Store || Object.keys(Store).length === 0) {
-    alert("Store khali mila!");
-    return;
+  try {
+    const payload = JSON.stringify(Store);
+    if (!payload || payload === "{}" || payload === "null") return;
+
+    fetch(GOOGLE_BACKUP_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    }).then(() => {
+      localStorage.setItem('sgm_last_auto_backup', todayStr);
+      console.log("Safe Daily Auto Backup Drive par bhej diya gaya!");
+    }).catch(err => {
+      console.error("Auto Backup Request Error:", err);
+    });
+  } catch (e) {
+    console.error("Store read error:", e);
   }
-  
-  alert("2. Drive par request bhej raha hoon...");
-  // 5. Safe Data Upload
-  fetch(GOOGLE_BACKUP_SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(Store)
-  }).then(() => {
-    // Kamyabi se request send hone par hi flag set hoga
-    localStorage.setItem('sgm_last_auto_backup', todayStr);
-    console.log("Safe Daily Auto Backup Drive par bhej diya gaya!");
-  }).catch(err => {
-    console.error("Auto Backup Request Error:", err);
-  });
 }
 
 function triggerRestoreJSON() {
