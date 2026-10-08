@@ -2605,7 +2605,7 @@ function sendQrWhatsApp() {
   const ph = clean.length === 10 ? '91' + clean : clean;
   window.open(`https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}`, '_blank');
 }
-  // Desktop Fast Keyboard Shortcuts (with List Arrow Navigation)
+// Desktop Fast Keyboard Shortcuts (with List Arrow Navigation, Tab to Note & Enter to Save)
 let selectedCustIndex = -1;
 
 document.addEventListener('keydown', function(e) {
@@ -2647,11 +2647,21 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
-  // 2. Modal typing me ENTER se direct SAVE
+  // 2. Amount field me TAB dabane par seedha NOTE / DESCRIPTION par jump
+  if (e.key === 'Tab' && !e.shiftKey && activeEl && (activeEl.type === 'number' || /amount|rupaye|raashi/i.test(activeEl.placeholder || ''))) {
+    const noteEl = document.querySelector('textarea, input[placeholder*="note" i], input[placeholder*="remark" i], input[placeholder*="vivran" i], input[placeholder*="hisaab" i]');
+    if (noteEl && noteEl.offsetParent !== null) {
+      e.preventDefault();
+      noteEl.focus();
+      return;
+    }
+  }
+
+  // 3. Modal typing me ENTER se direct SAVE
   if (e.key === 'Enter' && isTyping && !isSearchInput) {
-    const saveBtn = Array.from(document.querySelectorAll('button')).find(btn => {
-      const txt = (btn.innerText || btn.textContent || '').trim().toLowerCase();
-      const isSave = txt.includes('save') || txt.includes('jama') || txt.includes('udhaar') || txt.includes('submit');
+    const saveBtn = Array.from(document.querySelectorAll('button, input[type="submit"]')).find(btn => {
+      const txt = (btn.innerText || btn.textContent || btn.value || '').trim().toLowerCase();
+      const isSave = txt.includes('save') || txt.includes('jama') || txt.includes('udhaar') || txt.includes('submit') || txt.includes('add');
       return isSave && btn.offsetParent !== null;
     });
     if (saveBtn) {
@@ -2680,14 +2690,17 @@ document.addEventListener('keydown', function(e) {
   if (key === 'g') {
     const givenBtn = Array.from(document.querySelectorAll('button')).find(btn => {
       const txt = (btn.innerText || btn.textContent || '').toLowerCase();
-      return (txt.includes('given') || txt.includes('udhaar') || txt.includes('gave')) && btn.offsetParent !== null;
+      return (txt.includes('given') || txt.includes('udhaar') || txt.includes('gave') || txt.includes('diya')) && btn.offsetParent !== null;
     });
     if (givenBtn) {
       e.preventDefault();
       givenBtn.click();
       setTimeout(() => {
         const amtInput = document.querySelector('input[type="number"], input[placeholder*="Amount" i]');
-        if (amtInput) amtInput.focus();
+        if (amtInput) {
+          amtInput.focus();
+          amtInput.select();
+        }
       }, 200);
     }
   }
@@ -2696,14 +2709,17 @@ document.addEventListener('keydown', function(e) {
   if (key === 'p') {
     const paymentBtn = Array.from(document.querySelectorAll('button')).find(btn => {
       const txt = (btn.innerText || btn.textContent || '').toLowerCase();
-      return (txt.includes('received') || txt.includes('jama') || txt.includes('got') || txt.includes('payment')) && btn.offsetParent !== null;
+      return (txt.includes('received') || txt.includes('jama') || txt.includes('got') || txt.includes('payment') || txt.includes('liya')) && btn.offsetParent !== null;
     });
     if (paymentBtn) {
       e.preventDefault();
       paymentBtn.click();
       setTimeout(() => {
         const amtInput = document.querySelector('input[type="number"], input[placeholder*="Amount" i]');
-        if (amtInput) amtInput.focus();
+        if (amtInput) {
+          amtInput.focus();
+          amtInput.select();
+        }
       }, 200);
     }
   }
