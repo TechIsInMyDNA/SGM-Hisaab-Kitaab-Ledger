@@ -2605,7 +2605,7 @@ function sendQrWhatsApp() {
   const ph = clean.length === 10 ? '91' + clean : clean;
   window.open(`https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}`, '_blank');
 }
-// Desktop Fast Keyboard Shortcuts (with List Arrow Navigation, Tab to Note & Enter to Save)
+// Desktop Fast Keyboard Shortcuts (with Exact SGM Calculator Modal IDs)
 let selectedCustIndex = -1;
 
 document.addEventListener('keydown', function(e) {
@@ -2647,27 +2647,39 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
-  // 2. Amount field me TAB dabane par seedha NOTE / DESCRIPTION par jump
-  if (e.key === 'Tab' && !e.shiftKey && activeEl && (activeEl.type === 'number' || /amount|rupaye|raashi/i.test(activeEl.placeholder || ''))) {
-    const noteEl = document.querySelector('textarea, input[placeholder*="note" i], input[placeholder*="remark" i], input[placeholder*="vivran" i], input[placeholder*="hisaab" i]');
-    if (noteEl && noteEl.offsetParent !== null) {
-      e.preventDefault();
-      noteEl.focus();
-      return;
+  // 2. Calculator Modal: TAB dabane par Seedha Note (calcItemNote) par focus
+  if (e.key === 'Tab' && !e.shiftKey) {
+    const modal = document.getElementById('entryCalcModal');
+    const isModalOpen = modal && modal.style.display !== 'none';
+
+    if (isModalOpen) {
+      const noteInput = document.getElementById('calcItemNote');
+      // Agar active element Note nahi hai, to Tab dabane par Note par bhej do
+      if (noteInput && activeEl !== noteInput) {
+        e.preventDefault();
+        noteInput.focus();
+        return;
+      }
     }
   }
 
-  // 3. Modal typing me ENTER se direct SAVE
-  if (e.key === 'Enter' && isTyping && !isSearchInput) {
-    const saveBtn = Array.from(document.querySelectorAll('button, input[type="submit"]')).find(btn => {
-      const txt = (btn.innerText || btn.textContent || btn.value || '').trim().toLowerCase();
-      const isSave = txt.includes('save') || txt.includes('jama') || txt.includes('udhaar') || txt.includes('submit') || txt.includes('add');
-      return isSave && btn.offsetParent !== null;
-    });
-    if (saveBtn) {
+  // 3. Calculator Modal: ENTER dabane par SAVE button trigger
+  if (e.key === 'Enter' && !isSearchInput) {
+    const modal = document.getElementById('entryCalcModal');
+    const isModalOpen = modal && modal.style.display !== 'none';
+
+    if (isModalOpen) {
       e.preventDefault();
-      saveBtn.click();
-      return;
+      // Calculator modal ke andar ka SAVE button
+      const saveBtn = Array.from(modal.querySelectorAll('button, div, span')).find(btn => {
+        const txt = (btn.innerText || btn.textContent || '').trim().toUpperCase();
+        return txt === 'SAVE' && btn.offsetParent !== null;
+      });
+
+      if (saveBtn) {
+        saveBtn.click();
+        return;
+      }
     }
   }
 
@@ -2686,41 +2698,27 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
-  // 'g' se Given Udhaar open
+  // 'g' se Given Udhaar Modal open
   if (key === 'g') {
     const givenBtn = Array.from(document.querySelectorAll('button')).find(btn => {
       const txt = (btn.innerText || btn.textContent || '').toLowerCase();
-      return (txt.includes('given') || txt.includes('udhaar') || txt.includes('gave') || txt.includes('diya')) && btn.offsetParent !== null;
+      return (txt.includes('given') || txt.includes('udhaar') || txt.includes('diya')) && btn.offsetParent !== null;
     });
     if (givenBtn) {
       e.preventDefault();
       givenBtn.click();
-      setTimeout(() => {
-        const amtInput = document.querySelector('input[type="number"], input[placeholder*="Amount" i]');
-        if (amtInput) {
-          amtInput.focus();
-          amtInput.select();
-        }
-      }, 200);
     }
   }
 
-  // 'p' se Payment Received open
+  // 'p' se Payment Received Modal open
   if (key === 'p') {
     const paymentBtn = Array.from(document.querySelectorAll('button')).find(btn => {
       const txt = (btn.innerText || btn.textContent || '').toLowerCase();
-      return (txt.includes('received') || txt.includes('jama') || txt.includes('got') || txt.includes('payment') || txt.includes('liya')) && btn.offsetParent !== null;
+      return (txt.includes('received') || txt.includes('jama') || txt.includes('liya') || txt.includes('payment')) && btn.offsetParent !== null;
     });
     if (paymentBtn) {
       e.preventDefault();
       paymentBtn.click();
-      setTimeout(() => {
-        const amtInput = document.querySelector('input[type="number"], input[placeholder*="Amount" i]');
-        if (amtInput) {
-          amtInput.focus();
-          amtInput.select();
-        }
-      }, 200);
     }
   }
 });
