@@ -1596,6 +1596,15 @@ function selectCustomer(cid) {
 
 function closeLedgerMobileView() {
   document.getElementById('ledgerPane').classList.remove('mobile-open');
+  
+  const searchInput = document.querySelector('input[type="search"]') || 
+                      document.getElementById('searchCustomer') || 
+                      document.querySelector('input[placeholder*="Search" i]') || 
+                      document.querySelector('input[placeholder*="naam" i]');
+  if (searchInput && searchInput.value !== '') {
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
 }
 
 function renderLedgerView(cid) {
