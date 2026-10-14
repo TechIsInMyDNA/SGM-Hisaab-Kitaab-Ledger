@@ -1680,7 +1680,9 @@ function renderLedgerView(cid) {
     stream.appendChild(wrap);
   });
 
-  stream.scrollTop = stream.scrollHeight;
+    setTimeout(() => {
+    stream.scrollTop = stream.scrollHeight;
+  }, 50);
 }
 
 function toggleCalcSettings() {
