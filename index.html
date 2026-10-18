@@ -1081,6 +1081,7 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
   const merged = JSON.parse(JSON.stringify(localFirms));
   const delCustSet = new Set(Store.deletedCustomerIds || []);
   const delFirmSet = new Set(Store.deletedFirmIds || []);
+  const delTxSet = new Set(Store.deletedTxIds || []);
 
   for (let fid in remoteFirms) {
     if (delFirmSet.has(fid)) {
@@ -1123,9 +1124,11 @@ function mergeLedgerFirms(localFirms, remoteFirms) {
       }
 
       const txMap = new Map();
-      (lCust.transactions || []).forEach(t => txMap.set(t.id, t));
+      (lCust.transactions || []).filter(t => !delTxSet.has(t.id)).forEach(t => txMap.set(t.id, t));
       
       (rCust.transactions || []).forEach(rTx => {
+        if (delTxSet.has(rTx.id)) return;
+
         if (!txMap.has(rTx.id)) {
           txMap.set(rTx.id, rTx);
         } else {
@@ -1275,6 +1278,10 @@ async function syncToCloud(isManual = false) {
             const combinedDelFirms = new Set([...(Store.deletedFirmIds || []), ...remoteStore.deletedFirmIds]);
             Store.deletedFirmIds = Array.from(combinedDelFirms);
           }
+          if (remoteStore.deletedTxIds && Array.isArray(remoteStore.deletedTxIds)) {
+            const combinedDelTx = new Set([...(Store.deletedTxIds || []), ...remoteStore.deletedTxIds]);
+            Store.deletedTxIds = Array.from(combinedDelTx);
+          }
           Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms);
           applyVaultSafetyToStore();
           localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
@@ -1287,6 +1294,7 @@ async function syncToCloud(isManual = false) {
     firms: Store.firms,
     deletedCustomerIds: Store.deletedCustomerIds || [],
     deletedFirmIds: Store.deletedFirmIds || [],
+    deletedTxIds: Store.deletedTxIds || [],
     updatedAt: Date.now()
   });
   const cipher = encryptPayload(payload, FIXED_SECRET_KEY);
@@ -1850,6 +1858,8 @@ function deleteTransaction(txId) {
   recordTransactionInVault(Store.activeFirmId, selectedCustomerId, tx, 'DELETE');
   cust.transactions.splice(idx, 1);
   cust.updatedAt = Date.now();
+  Store.deletedTxIds = Store.deletedTxIds || [];
+  if (!Store.deletedTxIds.includes(txId)) Store.deletedTxIds.push(txId);
 
   persistStore();
   renderLedgerView(selectedCustomerId);
