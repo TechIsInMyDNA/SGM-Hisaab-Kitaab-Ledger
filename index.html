@@ -1197,6 +1197,20 @@ function processIncomingCloudData(encrypted) {
           }
         }
 
+        if (Store.deletedTxIds && Store.deletedTxIds.length > 0) {
+          const delTxSet = new Set(Store.deletedTxIds);
+          for (let fid in Store.firms) {
+            const custs = Store.firms[fid].customers || {};
+            for (let cid in custs) {
+              if (custs[cid].transactions) {
+                custs[cid].transactions = custs[cid].transactions.filter(t => !delTxSet.has(t.id));
+                custs[cid].balance = getCustomerBalanceFromTxs(custs[cid].transactions);
+              }
+            }
+          }
+        }
+        }
+
         applyVaultSafetyToStore();
 
         if (!Store.firms[Store.activeFirmId]) {
