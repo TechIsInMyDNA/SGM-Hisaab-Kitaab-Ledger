@@ -948,12 +948,19 @@ function initCloudSync() {
 }
 
 function getCustomerBalanceFromTxs(txs) {
+  if (!txs || !Array.isArray(txs)) return "0.00";
   let bal = 0;
-  (txs || []).forEach(t => {
+  for (const t of txs) {
     const a = parseFloat(t.amount) || 0;
     if (t.type === 'GIVEN') bal += a;
-    else if (t.type === 'RECEIVED') bal -= a;
-  });
+    else bal -= a;
+  }
+  // Floating-point bug hatane ke liye cents/paise me round karo:
+  bal = Math.round(bal * 100) / 100;
+  
+  // Agar zero ke bohot karib hai to clean 0.00 bana do
+  if (Math.abs(bal) === 0) bal = 0;
+  
   return bal.toFixed(2);
 }
 
