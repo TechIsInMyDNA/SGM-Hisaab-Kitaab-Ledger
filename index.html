@@ -1171,6 +1171,10 @@ function processIncomingCloudData(encrypted) {
           const combinedDelFirms = new Set([...(Store.deletedFirmIds || []), ...remoteStore.deletedFirmIds]);
           Store.deletedFirmIds = Array.from(combinedDelFirms);
         }
+        if (remoteStore.deletedTxIds && Array.isArray(remoteStore.deletedTxIds)) {
+          const combinedDelTx = new Set([...(Store.deletedTxIds || []), ...remoteStore.deletedTxIds]);
+          Store.deletedTxIds = Array.from(combinedDelTx);
+        }
 
         let localCount = 0;
         for (let f in Store.firms) localCount += Object.keys(Store.firms[f].customers || {}).length;
