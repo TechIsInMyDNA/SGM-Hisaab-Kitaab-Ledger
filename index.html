@@ -1687,10 +1687,24 @@ function renderLedgerView(cid) {
   badgeEl.className = `score-badge ${score.class}`;
   badgeEl.innerHTML = `<i class="fa-solid ${score.icon}"></i> ${score.label}`;
 
-  const bal = parseFloat(cust.balance || 0);
-  const balLabel = bal > 0 ? `₹${bal.toFixed(1)} Due (Lena Hai)` : (bal < 0 ? `₹${Math.abs(bal).toFixed(1)} Advance` : `₹0.00 Settled`);
+    // 1. Transactions se fresh balance nikalo aur paise rounding karo
+  const rawBal = parseFloat(getCustomerBalanceFromTxs(cust.transactions) || 0);
+  const bal = Math.round(rawBal * 100) / 100;
+
+  // 2. Exact settlement check (Math.abs < 0.05 se zero fix)
+  let balLabel = `₹0.0 Settled`;
+  let balColor = '#475569';
+
+  if (bal > 0.04) {
+    balLabel = `₹${bal.toFixed(1)} Due (Lena Hai)`;
+    balColor = 'var(--danger)';
+  } else if (bal < -0.04) {
+    balLabel = `₹${Math.abs(bal).toFixed(1)} Advance`;
+    balColor = 'var(--primary)';
+  }
+
   document.getElementById('ledgerRunningTotal').innerText = balLabel;
-  document.getElementById('ledgerRunningTotal').style.color = bal > 0 ? 'var(--danger)' : (bal < 0 ? 'var(--primary)' : '#475569');
+  document.getElementById('ledgerRunningTotal').style.color = balColor;
 
   const stream = document.getElementById('ledgerTimelineStream');
   stream.innerHTML = '';
@@ -1698,8 +1712,12 @@ function renderLedgerView(cid) {
   let running = 0;
   let lastDate = '';
   (cust.transactions || []).forEach(tx => {
-    if (tx.type === 'GIVEN') running += parseFloat(tx.amount);
-    else running -= parseFloat(tx.amount);
+    const amt = parseFloat(tx.amount) || 0;
+    if (tx.type === 'GIVEN') running += amt;
+    else running -= amt;
+
+    // Har entry ke running balance ko paise me round karo
+    running = Math.round(running * 100) / 100;
 
     if (tx.dateStr !== lastDate) {
       const sep = document.createElement('div');
@@ -1708,6 +1726,7 @@ function renderLedgerView(cid) {
       stream.appendChild(sep);
       lastDate = tx.dateStr;
     }
+
 
     const isGiven = tx.type === 'GIVEN';
     const wrap = document.createElement('div');
