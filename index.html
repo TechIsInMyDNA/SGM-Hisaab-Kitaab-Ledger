@@ -134,7 +134,7 @@
   .bubble-amt { font-size: 18px; font-weight: 900; }
   .bubble-time { font-size: 11px; color: var(--text-muted); }
   .bubble-note { font-size: 13px; color: #334155; margin-top: 5px; line-height: 1.4; }
-  .bubble-running { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
+  .entry-running-bal { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 4px; }
   .ledger-bottom-bar { background: #fff; border-top: 1px solid var(--border-color); padding: 12px 18px; display: flex; flex-direction: column; gap: 10px; }
   .quick-comm-row { display: flex; justify-content: space-between; align-items: center; }
   .comm-btn-group { display: flex; gap: 6px; }
@@ -693,6 +693,7 @@ let Store = {
   calcPresets: [5, 7, 8, 10],
   deletedCustomerIds: [],
   deletedFirmIds: [],
+  deletedTxIds: [],
   firms: {
     'firm_default': { id: 'firm_default', name: 'Agrawal Shubham', customers: {} }
   }
@@ -790,7 +791,6 @@ function startAppLifecycle() {
   applyCalcPresetsUI();
   initAlertTogglesUI();
   forceCloudFetch(false);
-    // App open hone ke theek 144 seconds baad backup execute karega
   setTimeout(() => {
     triggerDailyAutoBackup();
   }, 11000);
@@ -870,6 +870,7 @@ function loadFromLocalStorage() {
   Store.firebaseUrl = FIXED_REALTIME_DB_URL;
   if (!Store.deletedCustomerIds) Store.deletedCustomerIds = [];
   if (!Store.deletedFirmIds) Store.deletedFirmIds = [];
+  if (!Store.deletedTxIds) Store.deletedTxIds = [];
 
   if (!Store.firms || Object.keys(Store.firms).length === 0) {
     Store.firms = {
@@ -888,6 +889,16 @@ function loadFromLocalStorage() {
 
   if (Store.deletedFirmIds.length > 0) {
     for (let delFid of Store.deletedFirmIds) delete Store.firms[delFid];
+  }
+
+  // Pre-sync all customer balances to kill stale cache
+  for (let fid in Store.firms) {
+    const custs = Store.firms[fid].customers || {};
+    for (let cid in custs) {
+      if (custs[cid].transactions) {
+        custs[cid].balance = getCustomerBalanceFromTxs(custs[cid].transactions);
+      }
+    }
   }
 
   if (!Store.firms[Store.activeFirmId]) {
@@ -958,8 +969,8 @@ function getCustomerBalanceFromTxs(txs) {
   // Floating-point bug hatane ke liye cents/paise me round karo:
   bal = Math.round(bal * 100) / 100;
   
-  // Agar zero ke bohot karib hai to clean 0.00 bana do
-  if (Math.abs(bal) === 0) bal = 0;
+  // Exact settlement check (< 0.05 paise)
+  if (Math.abs(bal) < 0.05) bal = 0;
   
   return bal.toFixed(2);
 }
@@ -1378,6 +1389,7 @@ async function syncToCloud(isManual = false) {
     if (isManual) alert("Firebase Sync Error: " + err.message);
   }
 }
+
 function forceManualCloudSync() {
   syncToCloud(true);
 }
@@ -1401,12 +1413,16 @@ function calculateGrandTotals() {
   const currentFirm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   if (currentFirm && currentFirm.customers) {
     for (let cid in currentFirm.customers) {
-      const bal = parseFloat(currentFirm.customers[cid].balance || 0);
+      const c = currentFirm.customers[cid];
+      if (c.transactions) {
+        c.balance = getCustomerBalanceFromTxs(c.transactions);
+      }
+      const bal = parseFloat(c.balance || 0);
       if (bal > 0) totalLena += bal;
       else if (bal < 0) totalDena += Math.abs(bal);
     }
   }
-  const net = totalLena - totalDena;
+  const net = Math.round((totalLena - totalDena) * 100) / 100;
   document.getElementById('statKulLena').innerText = `₹${totalLena.toFixed(1)}`;
   document.getElementById('statKulDena').innerText = `₹${totalDena.toFixed(1)}`;
   document.getElementById('statNetBal').innerText = `₹${Math.abs(net).toFixed(1)} ${net >= 0 ? 'Dr' : 'Cr'}`;
@@ -1580,6 +1596,13 @@ function renderCustomerList() {
     return tMax;
   }
 
+  // Pre-calculate accurate balances before sorting/rendering to kill flicker
+  arr.forEach(c => {
+    if (c.transactions) {
+      c.balance = getCustomerBalanceFromTxs(c.transactions);
+    }
+  });
+
   if (activeSortOption === 'due_amount') {
     arr.sort((a,b) => parseFloat(b.balance || 0) - parseFloat(a.balance || 0));
   } else if (activeSortOption === 'name') {
@@ -1660,11 +1683,10 @@ function closeLedgerMobileView() {
   
   const searchInput = document.querySelector('input[type="search"]') || 
                       document.getElementById('searchCustomer') || 
-                      document.querySelector('input[placeholder*="Search" i]') || 
-                      document.querySelector('input[placeholder*="naam" i]');
+                      document.getElementById('custSearchBox');
   if (searchInput && searchInput.value !== '') {
     searchInput.value = '';
-    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    renderCustomerList();
   }
 }
 
@@ -1672,6 +1694,9 @@ function renderLedgerView(cid) {
   const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
   if (!firm || !firm.customers[cid]) return;
   const cust = firm.customers[cid];
+
+  // Instantly align customer balance from transactions before printing anything (kills flicker)
+  cust.balance = getCustomerBalanceFromTxs(cust.transactions);
 
   document.getElementById('ledgerEmptyMsg').style.display = 'none';
   document.getElementById('ledgerActiveArea').style.display = 'flex';
@@ -1687,8 +1712,8 @@ function renderLedgerView(cid) {
   badgeEl.className = `score-badge ${score.class}`;
   badgeEl.innerHTML = `<i class="fa-solid ${score.icon}"></i> ${score.label}`;
 
-    // 1. Transactions se fresh balance nikalo aur paise rounding karo
-  const rawBal = parseFloat(getCustomerBalanceFromTxs(cust.transactions) || 0);
+  // 1. Transactions se fresh balance nikalo aur paise rounding karo
+  const rawBal = parseFloat(cust.balance || 0);
   const bal = Math.round(rawBal * 100) / 100;
 
   // 2. Exact settlement check (Math.abs < 0.05 se zero fix)
@@ -1718,6 +1743,7 @@ function renderLedgerView(cid) {
 
     // Har entry ke running balance ko paise me round karo
     running = Math.round(running * 100) / 100;
+    if (Math.abs(running) < 0.05) running = 0;
 
     if (tx.dateStr !== lastDate) {
       const sep = document.createElement('div');
@@ -1727,11 +1753,10 @@ function renderLedgerView(cid) {
       lastDate = tx.dateStr;
     }
 
-
     const isGiven = tx.type === 'GIVEN';
     const wrap = document.createElement('div');
     wrap.className = 'bubble-wrap';
-    const runText = running >= 0 ? `₹${running.toFixed(1)} Due` : `₹${Math.abs(running).toFixed(1)} Advance`;
+    const runText = running === 0 ? `₹0.0 Settled` : (running > 0 ? `₹${running.toFixed(1)} Due` : `₹${Math.abs(running).toFixed(1)} Advance`);
     wrap.innerHTML = `
       <div class="entry-card-bubble ${isGiven ? 'bubble-given':'bubble-received'}">
         <div class="bubble-header">
@@ -1760,7 +1785,7 @@ function renderLedgerView(cid) {
     stream.appendChild(wrap);
   });
 
-    setTimeout(() => {
+  setTimeout(() => {
     stream.scrollTop = stream.scrollHeight;
   }, 50);
 }
@@ -1931,12 +1956,10 @@ function deleteTransaction(txId) {
   // 2. Array se transaction hatao
   cust.transactions.splice(idx, 1);
 
-  // 3. Balance recalculate karo (Exact Add/Edit formula)
-  const amt = parseFloat(tx.amount);
-  if (tx.type === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) - amt).toFixed(2);
-  else cust.balance = (parseFloat(cust.balance || 0) + amt).toFixed(2);
+  // 3. Balance recalculate karo strictly array sum se taaki drift na rahe
+  cust.balance = getCustomerBalanceFromTxs(cust.transactions);
 
-  // 4. Exact Add/Edit ki tarah customer aur store ka timestamp taaza karo
+  // 4. Timestamps taaza karo
   cust.updatedAt = currentActionTime;
   Store.updatedAt = currentActionTime;
 
@@ -1946,7 +1969,7 @@ function deleteTransaction(txId) {
     Store.deletedTxIds.push(txId);
   }
 
-  // 6. Local store save karo aur cloud sync trigger karo (persistStore ke andar syncToCloud chalta hai)
+  // 6. Local store save karo aur cloud sync trigger karo
   persistStore();
 
   // 7. Instant screen update
@@ -1981,16 +2004,12 @@ function submitTransactionEntry() {
     const tx = cust.transactions.find(t => t.id === editingTxId);
     if (tx) {
       const oldAmt = parseFloat(tx.amount);
-      if (tx.type === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) - oldAmt).toFixed(2);
-      else cust.balance = (parseFloat(cust.balance || 0) + oldAmt).toFixed(2);
-
-                  const hasChanged = (oldAmt !== amt) || (tx.note !== note) || (tx.type !== currentTxType) || (tx.dateStr !== dateStr);
+      const hasChanged = (oldAmt !== amt) || (tx.note !== note) || (tx.type !== currentTxType) || (tx.dateStr !== dateStr);
       if (hasChanged) {
         tx.isEdited = true;
         tx.editedAtStr = getFormattedDateTime();
       }
 
-      
       tx.amount = amt;
       tx.note = note;
       tx.type = currentTxType;
@@ -2000,9 +2019,8 @@ function submitTransactionEntry() {
       tx.updatedAt = currentActionTime;
       recordTransactionInVault(Store.activeFirmId, selectedCustomerId, tx, 'ADD_EDIT');
 
-
-      if (currentTxType === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) + amt).toFixed(2);
-      else cust.balance = (parseFloat(cust.balance || 0) - amt).toFixed(2);
+      // Exact sum from transactions array to eliminate floating drift
+      cust.balance = getCustomerBalanceFromTxs(cust.transactions);
       cust.updatedAt = currentActionTime;
     }
   } else {
@@ -2021,8 +2039,8 @@ function submitTransactionEntry() {
     cust.transactions.push(tx);
     recordTransactionInVault(Store.activeFirmId, selectedCustomerId, tx, 'ADD_EDIT');
 
-    if (currentTxType === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) + amt).toFixed(2);
-    else cust.balance = (parseFloat(cust.balance || 0) - amt).toFixed(2);
+    // Exact sum from transactions array to eliminate floating drift
+    cust.balance = getCustomerBalanceFromTxs(cust.transactions);
     cust.updatedAt = currentActionTime;
 
     const sendWA = document.getElementById('chkWhatsAppAlert').checked;
@@ -2060,7 +2078,7 @@ function sendTransactionAlertWA(cust, tx) {
   if (tx.type === 'GIVEN') {
     msg = `*SGM BILL / TRANSACTION RECEIPT*\n\n` +
           `Dt:- *${dtStr}*\n\n` +
-          `सादर नमस्कार ${cust.name} जी,\n\n` +
+          ` सादर नमस्कार ${cust.name} जी,\n\n` +
           `हमारे साथ व्यवहार करने के लिए आपका हृदय से आभार।\n` +
           `आपके खाते में ( *₹${tx.amount}* ) इतना लेने का (बिल/सामग्री) दर्ज कर दिया गया है।\n` +
           (tx.note ? `विवरण (Note): ${tx.note}\n` : '') +
@@ -2114,9 +2132,6 @@ function sendWhatsAppReminder() {
   const firmName = firm.name || "Agrawal Shubham";
   const dtStr = getFormattedDateTime();
   const upiId = Store.upiId || "sgm144@ptyces";
-  const receiptNo = `SGM-REM-${Date.now().toString().slice(-6)}`;
-
-  const upiPayLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(firmName)}&am=${bal.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Payment to ' + firmName)}`;
 
   const msg = 
 `Dt:- *${dtStr}*
@@ -2301,7 +2316,6 @@ function exportFullJSONBackup() {
   const a = document.createElement('a');
   a.href = jsonStr;
   
-  // Exact Date + 24-hr Time (Jaise: MANUAL_SGM_Backup_2026-10-06_23-10.json)
   const now = new Date();
   const dateStr = now.toISOString().slice(0, 10);
   const hours = String(now.getHours()).padStart(2, '0');
@@ -2312,7 +2326,7 @@ function exportFullJSONBackup() {
   a.click();
   a.remove();
 }
-// Google Apps Script Web App URL yahan paste karein
+
 const GOOGLE_BACKUP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMvvMWrVs9WIvVMydMiTI6RCp9wJeUV4R_OpMfO7piRlgEDx7ZQXdqeRuB-7fyAmkv3w/exec";
 
 function triggerDailyAutoBackup() {
@@ -2332,7 +2346,7 @@ function triggerDailyAutoBackup() {
       body: payload
     }).then(() => {
       localStorage.setItem('sgm_last_auto_backup', todayStr);
-      showAutoBackupToast(); // Kone me silent notification dikhayega
+      showAutoBackupToast();
     }).catch(err => {
       console.error("Auto Backup Request Error:", err);
     });
@@ -2341,7 +2355,6 @@ function triggerDailyAutoBackup() {
   }
 }
 
-// Top-Right Silent Toast Notification
 function showAutoBackupToast() {
   const toast = document.createElement("div");
   toast.innerHTML = "☁️ Auto SGM Backup Uploaded";
@@ -2361,7 +2374,6 @@ function showAutoBackupToast() {
 
   document.body.appendChild(toast);
 
-  // 4 second baad apne aap smoothly gayab ho jayega
   setTimeout(() => {
     toast.style.opacity = "0";
     setTimeout(() => toast.remove(), 500);
@@ -2483,6 +2495,9 @@ function printCustomerLedgerPDF() {
   (cust.transactions || []).forEach((tx, idx) => {
     if (tx.type === 'GIVEN') running += parseFloat(tx.amount);
     else running -= parseFloat(tx.amount);
+
+    running = Math.round(running * 100) / 100;
+    if (Math.abs(running) < 0.05) running = 0;
 
     const isGiven = tx.type === 'GIVEN';
     txRows += `
@@ -2714,6 +2729,7 @@ function sendQrWhatsApp() {
   const ph = clean.length === 10 ? '91' + clean : clean;
   window.open(`https://api.whatsapp.com/send?phone=${ph}&text=${encodeURIComponent(msg)}`, '_blank');
 }
+
 // Desktop Fast Keyboard Shortcuts (with Exact SGM Calculator Modal IDs)
 let selectedCustIndex = -1;
 
@@ -2756,14 +2772,13 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
-  // 2. Calculator Modal: TAB dabane par Seedha Note (calcItemNote) par focus
+  // 2. Calculator Modal: TAB dabane par Seedha Note par focus
   if (e.key === 'Tab' && !e.shiftKey) {
     const modal = document.getElementById('entryCalcModal');
     const isModalOpen = modal && modal.style.display !== 'none';
 
     if (isModalOpen) {
-      const noteInput = document.getElementById('calcItemNote');
-      // Agar active element Note nahi hai, to Tab dabane par Note par bhej do
+      const noteInput = document.getElementById('calcEntryNote');
       if (noteInput && activeEl !== noteInput) {
         e.preventDefault();
         noteInput.focus();
@@ -2779,7 +2794,6 @@ document.addEventListener('keydown', function(e) {
 
     if (isModalOpen) {
       e.preventDefault();
-      // Calculator modal ke andar ka SAVE button
       const saveBtn = Array.from(modal.querySelectorAll('button, div, span')).find(btn => {
         const txt = (btn.innerText || btn.textContent || '').trim().toUpperCase();
         return txt === 'SAVE' && btn.offsetParent !== null;
