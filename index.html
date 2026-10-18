@@ -1299,7 +1299,31 @@ async function syncToCloud(isManual = false) {
             const combinedDelTx = new Set([...(Store.deletedTxIds || []), ...remoteStore.deletedTxIds]);
             Store.deletedTxIds = Array.from(combinedDelTx);
           }
+
           Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms);
+
+          if (Store.deletedCustomerIds && Store.deletedCustomerIds.length > 0) {
+            const delSet = new Set(Store.deletedCustomerIds);
+            for (let fid in Store.firms) {
+              if (Store.firms[fid].customers) {
+                for (let delId of delSet) delete Store.firms[fid].customers[delId];
+              }
+            }
+          }
+
+          if (Store.deletedTxIds && Store.deletedTxIds.length > 0) {
+            const delTxSet = new Set(Store.deletedTxIds);
+            for (let fid in Store.firms) {
+              const custs = Store.firms[fid].customers || {};
+              for (let cid in custs) {
+                if (custs[cid].transactions) {
+                  custs[cid].transactions = custs[cid].transactions.filter(t => !delTxSet.has(t.id));
+                  custs[cid].balance = getCustomerBalanceFromTxs(custs[cid].transactions);
+                }
+              }
+            }
+          }
+
           applyVaultSafetyToStore();
           localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
         }
@@ -1341,7 +1365,6 @@ async function syncToCloud(isManual = false) {
     if (isManual) alert("Firebase Sync Error: " + err.message);
   }
 }
-
 function forceManualCloudSync() {
   syncToCloud(true);
 }
@@ -1881,6 +1904,7 @@ function deleteTransaction(txId) {
   persistStore();
   renderLedgerView(selectedCustomerId);
   renderCustomerList();
+  if (typeof syncToCloud === 'function') syncToCloud();
 }
 
 function submitTransactionEntry() {
