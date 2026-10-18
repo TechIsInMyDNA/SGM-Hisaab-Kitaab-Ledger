@@ -1894,38 +1894,37 @@ function deleteTransaction(txId) {
   if (idx === -1) return;
 
   const tx = cust.transactions[idx];
+  const currentActionTime = Date.now();
+
+  // 1. Vault me record karo
   recordTransactionInVault(Store.activeFirmId, selectedCustomerId, tx, 'DELETE');
 
-  // 1. Array se transaction hatao
+  // 2. Array se transaction hatao
   cust.transactions.splice(idx, 1);
 
-  // 2. Naya balance calculate karo
-  cust.balance = getCustomerBalanceFromTxs(cust.transactions);
+  // 3. Balance recalculate karo (Exact Add/Edit formula)
+  const amt = parseFloat(tx.amount);
+  if (tx.type === 'GIVEN') cust.balance = (parseFloat(cust.balance || 0) - amt).toFixed(2);
+  else cust.balance = (parseFloat(cust.balance || 0) + amt).toFixed(2);
 
-  // 3. Customer aur Store ka timestamp taaza karo (Jaisa Add/Edit me hota hai)
-  const now = Date.now();
-  cust.updatedAt = now;
-  Store.updatedAt = now;
+  // 4. Exact Add/Edit ki tarah customer aur store ka timestamp taaza karo
+  cust.updatedAt = currentActionTime;
+  Store.updatedAt = currentActionTime;
 
-  // 4. Tombstone ID save karo
+  // 5. Tombstone array me pakka save karo
   Store.deletedTxIds = Store.deletedTxIds || [];
   if (!Store.deletedTxIds.includes(txId)) {
     Store.deletedTxIds.push(txId);
   }
 
-  // 5. Local store save karo
+  // 6. Local store save karo aur cloud sync trigger karo (persistStore ke andar syncToCloud chalta hai)
   persistStore();
 
-  // 6. Current screen UI refresh karo
+  // 7. Instant screen update
   renderLedgerView(selectedCustomerId);
   renderCustomerList();
-
-  // 7. Cloud par turant push karo bina pre-merge rollback ke
-  if (typeof syncToCloud === 'function') {
-    syncToCloud(false);
-  }
 }
-
+  
 function submitTransactionEntry() {
   pressCalcKey('=');
   const amt = parseFloat(document.getElementById('calcMainDisplay').value);
