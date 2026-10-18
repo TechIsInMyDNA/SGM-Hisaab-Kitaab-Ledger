@@ -1200,20 +1200,22 @@ function processIncomingCloudData(encrypted) {
           }
         }
 
+        // Vault safety run hone do (taaki offline data safe rahe)
+        applyVaultSafetyToStore();
+
+        // MASTER FIX: Vault agar delete kiye huye transaction ko resurrect kare, toh usko pakka prune karo
         if (Store.deletedTxIds && Store.deletedTxIds.length > 0) {
-          const delTxSet = new Set(Store.deletedTxIds);
+          const finalDelTxSet = new Set(Store.deletedTxIds);
           for (let fid in Store.firms) {
             const custs = Store.firms[fid].customers || {};
             for (let cid in custs) {
               if (custs[cid].transactions) {
-                custs[cid].transactions = custs[cid].transactions.filter(t => !delTxSet.has(t.id));
+                custs[cid].transactions = custs[cid].transactions.filter(t => !finalDelTxSet.has(t.id));
                 custs[cid].balance = getCustomerBalanceFromTxs(custs[cid].transactions);
               }
             }
           }
         }
-
-        applyVaultSafetyToStore();
 
         if (!Store.firms[Store.activeFirmId]) {
           Store.activeFirmId = Object.keys(Store.firms)[0] || 'firm_default';
@@ -1223,6 +1225,7 @@ function processIncomingCloudData(encrypted) {
         updateFirmUI();
         renderCustomerList();
         calculateGrandTotals();
+        
         if (selectedCustomerId && Store.firms[Store.activeFirmId]?.customers[selectedCustomerId]) {
           renderLedgerView(selectedCustomerId);
         } else if (selectedCustomerId && !Store.firms[Store.activeFirmId]?.customers[selectedCustomerId]) {
