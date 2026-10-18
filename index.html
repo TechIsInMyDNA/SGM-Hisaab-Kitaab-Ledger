@@ -1074,14 +1074,17 @@ function applyVaultSafetyToStore() {
 }
 
 // BULLETPROOF TRANSACTION MERGE WITH `updatedAt` VERSIONING
-function mergeLedgerFirms(localFirms, remoteFirms) {
+function mergeLedgerFirms(localFirms, remoteFirms, remoteDeletedTxIds = []) {
   if (!remoteFirms || typeof remoteFirms !== 'object') return localFirms;
   if (!localFirms || typeof localFirms !== 'object') return remoteFirms;
 
   const merged = JSON.parse(JSON.stringify(localFirms));
   const delCustSet = new Set(Store.deletedCustomerIds || []);
   const delFirmSet = new Set(Store.deletedFirmIds || []);
-  const delTxSet = new Set(Store.deletedTxIds || []);
+  const delTxSet = new Set([
+    ...(Store.deletedTxIds || []),
+    ...(Array.isArray(remoteDeletedTxIds) ? remoteDeletedTxIds : [])
+  ]);
 
   for (let fid in remoteFirms) {
     if (delFirmSet.has(fid)) {
