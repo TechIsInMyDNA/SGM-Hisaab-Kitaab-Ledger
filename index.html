@@ -1185,7 +1185,7 @@ function processIncomingCloudData(encrypted) {
         if (localCount === 0) {
           Store.firms = remoteStore.firms;
         } else {
-          Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms);
+          Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms, remoteStore.deletedTxIds);
         }
 
         if (Store.deletedFirmIds && Store.deletedFirmIds.length > 0) {
@@ -1303,7 +1303,7 @@ async function syncToCloud(isManual = false) {
             Store.deletedTxIds = Array.from(combinedDelTx);
           }
 
-          Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms);
+          Store.firms = mergeLedgerFirms(Store.firms, remoteStore.firms, remoteStore.deletedTxIds);
 
           if (Store.deletedCustomerIds && Store.deletedCustomerIds.length > 0) {
             const delSet = new Set(Store.deletedCustomerIds);
