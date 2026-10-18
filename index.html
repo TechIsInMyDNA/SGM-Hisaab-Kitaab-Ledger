@@ -960,19 +960,15 @@ function initCloudSync() {
 
 function getCustomerBalanceFromTxs(txs) {
   if (!txs || !Array.isArray(txs)) return "0.00";
-  let bal = 0;
+  let balPaise = 0;
   for (const t of txs) {
-    const a = parseFloat(t.amount) || 0;
-    if (t.type === 'GIVEN') bal += a;
-    else bal -= a;
+    const a = Math.round((parseFloat(t.amount) || 0) * 100);
+    if (t.type === 'GIVEN') balPaise += a;
+    else balPaise -= a;
   }
-  // Floating-point bug hatane ke liye cents/paise me round karo:
-  bal = Math.round(bal * 100) / 100;
-  
-  // Exact settlement check (< 0.05 paise)
-  if (Math.abs(bal) < 0.05) bal = 0;
-  
-  return bal.toFixed(2);
+  // Floating rounding completely integer paise me solve ho gaya
+  if (Math.abs(balPaise) < 5) balPaise = 0;
+  return (balPaise / 100).toFixed(2);
 }
 
 // CUSTOMER HEALTH & CREDIT SCORE ENGINE (30 - 60 DAYS RULE WITH "VYAVHARIK")
@@ -1629,8 +1625,8 @@ function renderCustomerList() {
     if (query && !c.name.toLowerCase().includes(query) && !(c.phone || '').includes(query)) return;
 
     rendered++;
-    const isDue = bal > 0;
-    const isAdv = bal < 0;
+    const isDue = bal > 0.04;
+    const isAdv = bal < -0.04;
     const balColor = isDue ? 'var(--danger)' : (isAdv ? 'var(--primary)' : '#64748b');
     const tag = isDue ? 'Lena Hai' : (isAdv ? 'Advance' : 'Settled');
 
@@ -1734,16 +1730,15 @@ function renderLedgerView(cid) {
   const stream = document.getElementById('ledgerTimelineStream');
   stream.innerHTML = '';
 
-  let running = 0;
+  let runningPaise = 0;
   let lastDate = '';
   (cust.transactions || []).forEach(tx => {
-    const amt = parseFloat(tx.amount) || 0;
-    if (tx.type === 'GIVEN') running += amt;
-    else running -= amt;
+    const amtPaise = Math.round((parseFloat(tx.amount) || 0) * 100);
+    if (tx.type === 'GIVEN') runningPaise += amtPaise;
+    else runningPaise -= amtPaise;
 
-    // Har entry ke running balance ko paise me round karo
-    running = Math.round(running * 100) / 100;
-    if (Math.abs(running) < 0.05) running = 0;
+    if (Math.abs(runningPaise) < 5) runningPaise = 0;
+    const running = runningPaise / 100;
 
     if (tx.dateStr !== lastDate) {
       const sep = document.createElement('div');
@@ -1757,6 +1752,8 @@ function renderLedgerView(cid) {
     const wrap = document.createElement('div');
     wrap.className = 'bubble-wrap';
     const runText = running === 0 ? `₹0.0 Settled` : (running > 0 ? `₹${running.toFixed(1)} Due` : `₹${Math.abs(running).toFixed(1)} Advance`);
+    
+    // RESTORED: Edited badge is back inside bubble-header near time exactly as before!
     wrap.innerHTML = `
       <div class="entry-card-bubble ${isGiven ? 'bubble-given':'bubble-received'}">
         <div class="bubble-header">
@@ -1765,8 +1762,8 @@ function renderLedgerView(cid) {
             ₹${parseFloat(tx.amount).toFixed(1)}
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
-           <div class="bubble-time">${tx.timeStr || ''}</div>
-            <div style="display:inline-flex; align-items:center; gap:8px; margin-left:4px;">
+            <div class="bubble-time">${tx.timeStr || ''}</div>
+            <div style="display:inline-flex; align-items:center; gap:6px;">
               <button onclick="editTransaction('${tx.id}')" title="Edit Entry" style="background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:3px;">
                 <i class="fa-solid fa-pen-to-square"></i> Edit
               </button>
@@ -2078,7 +2075,7 @@ function sendTransactionAlertWA(cust, tx) {
   if (tx.type === 'GIVEN') {
     msg = `*SGM BILL / TRANSACTION RECEIPT*\n\n` +
           `Dt:- *${dtStr}*\n\n` +
-          ` सादर नमस्कार ${cust.name} जी,\n\n` +
+          `सादर नमस्कार ${cust.name} जी,\n\n` +
           `हमारे साथ व्यवहार करने के लिए आपका हृदय से आभार।\n` +
           `आपके खाते में ( *₹${tx.amount}* ) इतना लेने का (बिल/सामग्री) दर्ज कर दिया गया है।\n` +
           (tx.note ? `विवरण (Note): ${tx.note}\n` : '') +
@@ -2487,17 +2484,18 @@ function printCustomerLedgerPDF() {
   if (!cust) return;
 
   const bal = parseFloat(cust.balance || 0);
-  const balLabel = bal > 0 ? `₹${bal.toFixed(1)} Lena Hai (Due)` : (bal < 0 ? `₹${Math.abs(bal).toFixed(1)} Advance (Dena Hai)` : '₹0.00 Settled');
-  const balColor = bal > 0 ? '#dc2626' : (bal < 0 ? '#059669' : '#475569');
+  const balLabel = bal > 0.04 ? `₹${bal.toFixed(1)} Lena Hai (Due)` : (bal < -0.04 ? `₹${Math.abs(bal).toFixed(1)} Advance (Dena Hai)` : '₹0.00 Settled');
+  const balColor = bal > 0.04 ? '#dc2626' : (bal < -0.04 ? '#059669' : '#475569');
 
   let txRows = '';
-  let running = 0;
+  let runningPaise = 0;
   (cust.transactions || []).forEach((tx, idx) => {
-    if (tx.type === 'GIVEN') running += parseFloat(tx.amount);
-    else running -= parseFloat(tx.amount);
+    const amtPaise = Math.round((parseFloat(tx.amount) || 0) * 100);
+    if (tx.type === 'GIVEN') runningPaise += amtPaise;
+    else runningPaise -= amtPaise;
 
-    running = Math.round(running * 100) / 100;
-    if (Math.abs(running) < 0.05) running = 0;
+    if (Math.abs(runningPaise) < 5) runningPaise = 0;
+    const running = runningPaise / 100;
 
     const isGiven = tx.type === 'GIVEN';
     txRows += `
@@ -2506,8 +2504,8 @@ function printCustomerLedgerPDF() {
         <td style="padding:8px 4px;">${tx.note || (isGiven ? 'Given Udhaar / Bill' : 'Payment Received')}</td>
         <td style="padding:8px 4px; text-align:right; font-weight:700; color:#dc2626;">${isGiven ? '₹' + parseFloat(tx.amount).toFixed(1) : '-'}</td>
         <td style="padding:8px 4px; text-align:right; font-weight:700; color:#059669;">${!isGiven ? '₹' + parseFloat(tx.amount).toFixed(1) : '-'}</td>
-        <td style="padding:8px 4px; text-align:right; font-weight:800; color:${running >= 0 ? '#dc2626':'#059669'};">
-          ₹${Math.abs(running).toFixed(1)} ${running >= 0 ? 'Dr':'Cr'}
+        <td style="padding:8px 4px; text-align:right; font-weight:800; color:${running > 0.04 ? '#dc2626':(running < -0.04 ? '#059669':'#475569')};">
+          ${running === 0 ? '₹0.0 Settled' : `₹${Math.abs(running).toFixed(1)}${running > 0 ? 'Dr':'Cr'}`}
         </td>
       </tr>
     `;
@@ -2573,7 +2571,7 @@ function shareCustomerLedgerWA() {
   if (!cust || !cust.phone) return alert("Mobile number uplabdh nahi hai!");
 
   const bal = parseFloat(cust.balance || 0);
-  const balLabel = bal > 0 ? `Kul Baki Hisaab (Due): ₹${bal.toFixed(1)}` : (bal < 0 ? `Advance Balance: ₹${Math.abs(bal).toFixed(1)}` : `Hisaab Settled (₹0)`);
+  const balLabel = bal > 0.04 ? `Kul Baki Hisaab (Due): ₹${bal.toFixed(1)}` : (bal < -0.04 ? `Advance Balance: ₹${Math.abs(bal).toFixed(1)}` : `Hisaab Settled (₹0)`);
   const dtStr = getFormattedDateTime();
   
   let txList = '';
@@ -2585,7 +2583,7 @@ function shareCustomerLedgerWA() {
 
   const msg = `*SGM CUSTOMER ACCOUNT STATEMENT*\n\n` +
               `Dt:- *${dtStr}*\n\n` +
-              `सादर नमस्कार ${cust.name} जी,\n` +
+              ` सादर नमस्कार ${cust.name} जी,\n` +
               `आपका *${firm.name}* पर खाता विवरण:\n\n` +
               `*${balLabel}*\n\n` +
               (recent.length ? `*हाल ही के लेन-देन (Recent Entries):*\n${txList}\n` : '') +
