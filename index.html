@@ -2842,6 +2842,18 @@ document.addEventListener('keydown', function(e) {
       paymentBtn.click();
     }
   }
+
+  // 'c' se Books / Firms rotate/cycle karna (Ek ke baad ek next firm)
+  if (key === 'c') {
+    e.preventDefault();
+    const firmIds = Object.keys(Store.firms || {});
+    if (firmIds.length > 1) {
+      const currentIndex = firmIds.indexOf(Store.activeFirmId);
+      // Agli firm ka index nikalo, aakhri ke baad wapas pehli (rotate)
+      const nextIndex = (currentIndex + 1) % firmIds.length;
+      switchFirm(firmIds[nextIndex]);
+    }
+  }
 });
 
 function highlightCard(cards, idx) {
