@@ -2746,6 +2746,15 @@ document.addEventListener('keydown', function(e) {
 
   // 1. Search Box Navigation (Arrow Keys + Enter)
   if (isSearchInput) {
+    // ESC dabane par search input clear ho jaye aur focus bahar aa jaye
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      activeEl.value = '';
+      activeEl.dispatchEvent(new Event('input', { bubbles: true }));
+      activeEl.blur(); // focus bahar nikal jayega taaki 'c' dabate hi firm change ho sake
+      return;
+    }
+    
     const cards = getCustomerCards();
     if (cards.length > 0) {
       if (e.key === 'ArrowDown') {
