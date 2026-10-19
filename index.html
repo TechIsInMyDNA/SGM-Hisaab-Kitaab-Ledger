@@ -1455,7 +1455,7 @@ function switchFirm(fid) {
   updateFirmUI();
   renderCustomerList();
   calculateGrandTotals();
-  persistStore();
+  localStorage.setItem('SGM_HISAAB_STORE_V2', JSON.stringify(Store));
 }
 
 function openAddFirmModal() {
