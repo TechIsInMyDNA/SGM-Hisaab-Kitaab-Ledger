@@ -649,7 +649,7 @@
         <div style="font-size:12px; font-weight:800; color:#1e293b;" id="qrShopName">Agrawal Shubham</div>
         <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:4px;">
           <span style="font-size:11px; color:var(--text-muted);">UPI ID:</span>
-          <input type="text" id="qrUpiIdInput" style="font-size:11px; font-weight:700; color:#2563eb; border:1px solid #cbd5e1; border-radius:6px; padding:2px 8px; text-align:center; width:160px; outline:none;" value="sgm144@ptyces" oninput="regenerateQrCode()">
+          <input type="text" id="qrUpiIdInput" style="font-size:11px; font-weight:700; color:#2563eb; border:1px solid #cbd5e1; border-radius:6px; padding:2px 8px; text-align:center; width:160px; outline:none;" value="sgm144@ptyes" oninput="regenerateQrCode()">
         </div>
 
         <div style="display:flex; justify-content:center; align-items:center; gap:16px; margin-top:14px; padding-top:10px; border-top:1px dashed #e2e8f0; font-size:11px; font-weight:700; color:#475569;">
@@ -2128,7 +2128,7 @@ function sendWhatsAppReminder() {
   if (bal <= 0) return alert("Koi baki due payment nahi hai!");
   const firmName = firm.name || "Agrawal Shubham";
   const dtStr = getFormattedDateTime();
-  const upiId = Store.upiId || "sgm144@ptyces";
+  const upiId = Store.upiId || "sgm144@ptyes";
 
   const msg = 
 `Dt:- *${dtStr}*
@@ -2666,7 +2666,7 @@ function openQrCollectionModal() {
   document.getElementById('qrCustomAmount').value = displayBal.toFixed(1);
   document.getElementById('qrShopName').innerText = firm.name || "Agrawal Shubham";
 
-  if (!Store.upiId) Store.upiId = "sgm144@ptyces";
+  if (!Store.upiId) Store.upiId = "sgm144@ptyes";
   document.getElementById('qrUpiIdInput').value = Store.upiId;
 
   document.getElementById('qrCollectionModal').style.display = 'flex';
@@ -2679,7 +2679,7 @@ function closeQrCollectionModal() {
 }
 
 function regenerateQrCode() {
-  const upiId = document.getElementById('qrUpiIdInput').value.trim() || "sgm144@ptyces";
+  const upiId = document.getElementById('qrUpiIdInput').value.trim() || "sgm144@ptyes";
   Store.upiId = upiId;
   const amt = parseFloat(document.getElementById('qrCustomAmount').value) || 0;
   const firm = Store.firms[Store.activeFirmId] || { name: "Agrawal Shubham" };
