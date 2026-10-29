@@ -198,13 +198,67 @@
     #entryCalcModal .calc-keys-grid { gap: 5px; margin-bottom: 6px; }
     #entryCalcModal .ckey { padding: 10px 0; font-size: 17px; }
   }
+ /* NAYA FIX: Multi-page dynamic auto-flow for A4, A6, Letter */
   @media print {
-    body * { visibility: hidden; }
-    #printStatementModal, #printStatementModal * { visibility: visible; }
-    #printStatementModal { position: absolute; left: 0; top: 0; width: 100%; height: auto; background: #fff !important; z-index: 99999; }
-    .no-print { display: none !important; }
+    @page {
+      margin: 8mm 10mm;
+      size: auto;
+    }
+    html, body {
+      height: auto !important;
+      min-height: 100% !important;
+      overflow: visible !important;
+      background: #fff !important;
+    }
+    body * { 
+      visibility: hidden; 
+    }
+    #printStatementModal, #printStatementModal * { 
+      visibility: visible; 
+    }
+    #printStatementModal {
+      position: static !important;
+      display: block !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 100% !important;
+      overflow: visible !important;
+      background: #fff !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      z-index: 99999;
+    }
+    #printStatementModal .modal-box {
+      max-width: 100% !important;
+      width: 100% !important;
+      height: auto !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      overflow: visible !important;
+    }
+    #printStatementBody {
+      padding: 0 !important;
+      overflow: visible !important;
+      height: auto !important;
+    }
+    table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      page-break-inside: auto !important;
+    }
+    tr {
+      page-break-inside: avoid !important;
+      page-break-after: auto !important;
+    }
+    thead {
+      display: table-header-group !important;
+    }
+    .no-print { 
+      display: none !important; 
+    }
   }
-</style>
 </head>
 <body>
 
@@ -2511,6 +2565,7 @@ function printCustomerLedgerPDF() {
     `;
   });
 
+  // NAYA CODE (UPI ID EMBEDDED):
   const statementHtml = `
     <div style="border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px;">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -2531,6 +2586,9 @@ function printCustomerLedgerPDF() {
         <div style="text-align:right;">
           <div style="font-size:11px; font-weight:800; color:#64748b;">NET BALANCE:</div>
           <div style="font-size:18px; font-weight:900; color:${balColor};">${balLabel}</div>
+          <div style="font-size:11px; font-weight:700; color:#1e293b; margin-top:3px;">
+            Pay UPI: <span style="color:#2563eb; background:#eff6ff; padding:1px 6px; border-radius:4px; border:1px solid #bfdbfe;">sgm144@ptyes</span>
+          </div>
         </div>
       </div>
     </div>
