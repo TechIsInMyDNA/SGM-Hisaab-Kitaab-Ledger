@@ -2671,20 +2671,17 @@ function triggerSafePrint() {
   const mins = String(now.getMinutes()).padStart(2, '0');
   
   const custName = cust ? cust.name.replace(/[/\\?%*:|"<>]/g, '').trim() : 'Customer';
-  const pdfFileName = `${custName}_${d}-${m}-${y}_${hours}-${mins}.pdf`;
+  const pdfFileName = `${custName}_${d}-${m}-${y}_${hours}-${mins}`;
 
-  const element = document.getElementById('printStatementBody');
+  // Title ko direct DOM me lock karo taaki print spooler yahi naam uthaye
+  document.title = pdfFileName;
+  let t = document.getElementsByTagName('title')[0];
+  if (t) t.innerText = pdfFileName;
 
-  const opt = {
-    margin:       [8, 10, 8, 10],
-    filename:     pdfFileName,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  // Direct PDF create karke exact filename ke saath save karega
-  html2pdf().set(opt).from(element).save();
+  // 150ms ka delay dekar native system print kholo
+  setTimeout(() => {
+    window.print();
+  }, 150);
 }
 
 function closePrintStatementModal() {
