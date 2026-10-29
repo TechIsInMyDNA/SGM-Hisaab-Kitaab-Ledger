@@ -199,35 +199,51 @@
     #entryCalcModal .ckey { padding: 10px 0; font-size: 17px; }
   }
  /* NAYA FIX: Multi-page dynamic auto-flow for A4, A6, Letter */
+ /* FIRST BLANK PAGE COMPLETE KILLER */
   @media print {
     @page {
       margin: 8mm 10mm;
       size: auto;
     }
+    
     html, body {
       height: auto !important;
-      min-height: 100% !important;
+      min-height: 0 !important;
       overflow: visible !important;
       background: #fff !important;
-    }
-    body * { 
-      visibility: hidden; 
-    }
-    #printStatementModal, #printStatementModal * { 
-      visibility: visible; 
-    }
-    #printStatementModal {
-      position: static !important;
+      margin: 0 !important;
+      padding: 0 !important;
       display: block !important;
+    }
+
+    /* Screen ke layout ko print me space lene se roko taaki Page 1 khali na ho */
+    .app-layout, #authLockOverlay, .fab-add-cust, .no-print, header, nav {
+      display: none !important;
+      height: 0 !important;
+      max-height: 0 !important;
+      overflow: hidden !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .modal-overlay:not(#printStatementModal) {
+      display: none !important;
+    }
+
+    /* Print Modal ko absolute top par chipkao taaki Page 1 se hi table shuru ho */
+    #printStatementModal {
+      display: block !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
       width: 100% !important;
       height: auto !important;
-      min-height: 100% !important;
-      overflow: visible !important;
-      background: #fff !important;
-      padding: 0 !important;
       margin: 0 !important;
+      padding: 0 !important;
+      background: #fff !important;
       z-index: 99999;
     }
+
     #printStatementModal .modal-box {
       max-width: 100% !important;
       width: 100% !important;
@@ -238,25 +254,27 @@
       margin: 0 !important;
       overflow: visible !important;
     }
+
     #printStatementBody {
       padding: 0 !important;
+      margin: 0 !important;
       overflow: visible !important;
       height: auto !important;
     }
+
     table {
       width: 100% !important;
       border-collapse: collapse !important;
       page-break-inside: auto !important;
     }
+
     tr {
       page-break-inside: avoid !important;
       page-break-after: auto !important;
     }
+
     thead {
       display: table-header-group !important;
-    }
-   .no-print { 
-      display: none !important; 
     }
   }
 </style>
