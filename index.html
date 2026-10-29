@@ -2726,19 +2726,34 @@ window.onafterprint = function() {
   const originalBody = document.getElementById('printStatementBody');
   if (!originalBody) return;
 
-  // Print jaisa exact full layout banane ke liye clone container
+  // Clone container create karo
   const printWrapper = document.createElement('div');
   printWrapper.style.width = '750px';
-  printWrapper.style.padding = '15px';
+  printWrapper.style.margin = '0';
+  printWrapper.style.padding = '10px';
   printWrapper.style.background = '#ffffff';
-  printWrapper.style.color = '#000000';
+  printWrapper.style.color = '#1e293b';
   printWrapper.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   printWrapper.innerHTML = originalBody.innerHTML;
 
-  // Sare scroll aur height restriction hatane ke liye
+  // Unwanted margin, padding aur scrolling reset karo
   printWrapper.querySelectorAll('*').forEach(el => {
     el.style.maxHeight = 'none';
     el.style.overflow = 'visible';
+    el.style.boxSizing = 'border-box';
+  });
+
+  // Table rows ko smooth split allow karo
+  const table = printWrapper.querySelector('table');
+  if (table) {
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.marginTop = '10px';
+    table.style.pageBreakInside = 'auto';
+  }
+
+  printWrapper.querySelectorAll('tr').forEach(tr => {
+    tr.style.pageBreakInside = 'avoid';
   });
 
   document.body.appendChild(printWrapper);
@@ -2747,14 +2762,14 @@ window.onafterprint = function() {
     margin:       [8, 8, 8, 8],
     filename:     pdfFileName,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+    html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: 750 },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+    pagebreak:    { mode: ['css', 'legacy'] } // avoid-all hata diya jisse bada space khatam ho
   };
 
   try {
     const pdfBlob = await html2pdf().set(opt).from(printWrapper).outputPdf('blob');
-    document.body.removeChild(printWrapper); // Clean up
+    document.body.removeChild(printWrapper);
 
     const file = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
 
@@ -2762,7 +2777,7 @@ window.onafterprint = function() {
       await navigator.share({
         files: [file],
         title: pdfFileName,
-        text: `Statement for ${custName}`
+        text: `Ledger statement for ${custName}`
       });
     } else {
       const link = document.createElement('a');
@@ -2776,7 +2791,6 @@ window.onafterprint = function() {
     if (document.body.contains(printWrapper)) {
       document.body.removeChild(printWrapper);
     }
-    // Fallback normal save
     html2pdf().set(opt).from(originalBody).save();
   }
 }
