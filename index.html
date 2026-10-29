@@ -9,6 +9,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <!-- CryptoJS AES 256 for Zero-Knowledge Client Encryption -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -2670,48 +2671,21 @@ function triggerSafePrint() {
   const mins = String(now.getMinutes()).padStart(2, '0');
   
   const custName = cust ? cust.name.replace(/[/\\?%*:|"<>]/g, '').trim() : 'Customer';
-  const pdfFileName = `${custName}_${d}-${m}-${y}_${hours}-${mins}`;
+  const pdfFileName = `${custName}_${d}-${m}-${y}_${hours}-${mins}.pdf`;
 
-  // Android WebView ke liye invisible iframe se print trigger
-  let oldFrame = document.getElementById('sgmPrintFrame');
-  if (oldFrame) oldFrame.remove();
+  const element = document.getElementById('printStatementBody');
 
-  const iframe = document.createElement('iframe');
-  iframe.id = 'sgmPrintFrame';
-  iframe.style.position = 'fixed';
-  iframe.style.opacity = '0';
-  iframe.style.pointerEvents = 'none';
-  document.body.appendChild(iframe);
+  const opt = {
+    margin:       [8, 10, 8, 10],
+    filename:     pdfFileName,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
 
-  const doc = iframe.contentWindow.document;
-  doc.open();
-  doc.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>${pdfFileName}</title>
-      <style>
-        @page { margin: 8mm 10mm; size: auto; }
-        body { font-family: -apple-system, sans-serif; margin: 0; padding: 0; color: #1e293b; }
-        table { width: 100% !important; border-collapse: collapse !important; }
-        tr { page-break-inside: avoid !important; }
-        thead { display: table-header-group !important; }
-        .no-print { display: none !important; }
-      </style>
-    </head>
-    <body>
-      ${document.getElementById('printStatementBody').innerHTML}
-    </body>
-    </html>
-  `);
-  doc.close();
-
-  setTimeout(() => {
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-  }, 200);
+  // Direct PDF create karke exact filename ke saath save karega
+  html2pdf().set(opt).from(element).save();
 }
-
 
 function closePrintStatementModal() {
   document.getElementById('printStatementModal').style.display = 'none';
