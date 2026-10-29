@@ -2659,10 +2659,59 @@ function printCustomerLedgerPDF() {
 }
 
 function triggerSafePrint() {
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+  const cust = selectedCustomerId && firm.customers ? firm.customers[selectedCustomerId] : null;
+  
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = now.getFullYear();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  
+  const custName = cust ? cust.name.replace(/[/\\?%*:|"<>]/g, '').trim() : 'Customer';
+  const pdfFileName = `${custName}_${d}-${m}-${y}_${hours}-${mins}`;
+
+  // Android WebView ke liye invisible iframe se print trigger
+  let oldFrame = document.getElementById('sgmPrintFrame');
+  if (oldFrame) oldFrame.remove();
+
+  const iframe = document.createElement('iframe');
+  iframe.id = 'sgmPrintFrame';
+  iframe.style.position = 'fixed';
+  iframe.style.opacity = '0';
+  iframe.style.pointerEvents = 'none';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${pdfFileName}</title>
+      <style>
+        @page { margin: 8mm 10mm; size: auto; }
+        body { font-family: -apple-system, sans-serif; margin: 0; padding: 0; color: #1e293b; }
+        table { width: 100% !important; border-collapse: collapse !important; }
+        tr { page-break-inside: avoid !important; }
+        thead { display: table-header-group !important; }
+        .no-print { display: none !important; }
+      </style>
+    </head>
+    <body>
+      ${document.getElementById('printStatementBody').innerHTML}
+    </body>
+    </html>
+  `);
+  doc.close();
+
   setTimeout(() => {
-    window.print();
-  }, 150);
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+  }, 200);
 }
+
 
 function closePrintStatementModal() {
   document.getElementById('printStatementModal').style.display = 'none';
