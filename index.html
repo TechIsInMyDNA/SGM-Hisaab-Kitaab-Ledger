@@ -2615,12 +2615,34 @@ function printCustomerLedgerPDF() {
 
   document.getElementById('printStatementBody').innerHTML = statementHtml;
   document.getElementById('printStatementModal').style.display = 'flex';
+  // Document title ko Customer Name + Date + Time banayein taaki PDF isi naam se save ho
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = now.getFullYear();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  
+  const cleanCustName = cust.name.replace(/[/\\?%*:|"<>]/g, '').trim();
+  const pdfFileName = `${cleanCustName}_${d}-${m}-${y}_${hours}-${mins}`;
+
+  // Title update karein
+  document.title = pdfFileName;
+
+  document.getElementById('printStatementBody').innerHTML = statementHtml;
+  document.getElementById('printStatementModal').style.display = 'flex';
+  pushModalState('printStatementModal');
   pushModalState('printStatementModal');
 }
 
 function closePrintStatementModal() {
   document.getElementById('printStatementModal').style.display = 'none';
+  document.title = "SGM Hisaab Kitaab - Multi-Firm Ledger";
 }
+
+window.onafterprint = function() {
+  document.title = "SGM Hisaab Kitaab - Multi-Firm Ledger";
+};
 
 function shareCustomerLedgerWA() {
   if (!selectedCustomerId) return;
