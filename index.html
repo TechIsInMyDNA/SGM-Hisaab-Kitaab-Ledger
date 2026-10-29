@@ -612,7 +612,18 @@
     <div class="modal-head no-print">
       <h3 style="font-size:16px; font-weight:800;">Customer Statement / Ledger</h3>
       <div style="display:flex; gap:8px;">
-        <button class="btn-top" style="background:#059669; color:#fff;" onclick="triggerSafePrint()"><i class="fa-solid fa-print"></i> Print / Save PDF</button>
+        <div style="display:inline-flex; gap:8px;">
+  <!-- Physical Printer ke liye -->
+  <button class="btn-top" style="background:#2563eb; color:#fff;" onclick="window.print()">
+    <i class="fa-solid fa-print"></i> Print
+  </button>
+  
+  <!-- Mobile Save / Share ke liye -->
+  <button class="btn-top" style="background:#059669; color:#fff;" onclick="shareOrDownloadPDF()">
+    <i class="fa-solid fa-file-pdf"></i> Save / Share PDF
+  </button>
+</div>
+
         <button class="btn-top" onclick="closePrintStatementModal()"><i class="fa-solid fa-xmark"></i></button>
       </div>
     </div>
@@ -2698,6 +2709,49 @@ window.onafterprint = function() {
   const tTag = document.querySelector('title');
   if (tTag) tTag.innerText = defaultTitle;
 };
+  async function shareOrDownloadPDF() {
+  const firm = Store.firms[Store.activeFirmId] || Store.firms['firm_default'];
+  const cust = selectedCustomerId && firm.customers ? firm.customers[selectedCustomerId] : null;
+  
+  const now = new Date();
+  const d = String(now.getDate()).padStart(2, '0');
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const y = now.getFullYear();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const mins = String(now.getMinutes()).padStart(2, '0');
+  
+  const custName = cust ? cust.name.replace(/[/\\?%*:|"<>]/g, '').trim() : 'Customer';
+  const pdfFileName = `${custName}_${d}-${m}-${y}_${hours}-${mins}.pdf`;
+
+  const element = document.getElementById('printStatementBody');
+
+  const opt = {
+    margin: [8, 10, 8, 10],
+    filename: pdfFileName,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  };
+
+  try {
+    const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+    const file = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: pdfFileName,
+        text: `Ledger statement for ${custName}`
+      });
+    } else {
+      html2pdf().set(opt).from(element).save();
+    }
+  } catch (err) {
+    console.error("PDF generation/share error:", err);
+    html2pdf().set(opt).from(element).save();
+  }
+}
 
 function shareCustomerLedgerWA() {
   if (!selectedCustomerId) return;
