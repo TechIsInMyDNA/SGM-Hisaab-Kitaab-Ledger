@@ -2726,49 +2726,62 @@ window.onafterprint = function() {
   const originalBody = document.getElementById('printStatementBody');
   if (!originalBody) return;
 
-  // Perfect A4 layout container (Standard 800px)
+  // A4 Printable Canvas: Exact 720px width for standard portrait fit
   const printWrapper = document.createElement('div');
-  printWrapper.style.width = '800px';
+  printWrapper.style.width = '720px';
   printWrapper.style.margin = '0 auto';
-  printWrapper.style.padding = '20px 25px'; // Upar aur side me proper breathing space
+  printWrapper.style.padding = '10px 15px';
   printWrapper.style.background = '#ffffff';
   printWrapper.style.color = '#1e293b';
   printWrapper.style.boxSizing = 'border-box';
   printWrapper.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   printWrapper.innerHTML = originalBody.innerHTML;
 
-  // Sare scroll aur unwanted overflow hatayein
+  // Overflow and constraint reset
   printWrapper.querySelectorAll('*').forEach(el => {
     el.style.maxHeight = 'none';
     el.style.overflow = 'visible';
     el.style.boxSizing = 'border-box';
   });
 
-  // Table full 100% width fit rahe bina right cut ke
+  // Table structure locking
   const table = printWrapper.querySelector('table');
   if (table) {
     table.style.width = '100%';
-    table.style.tableLayout = 'auto';
+    table.style.tableLayout = 'fixed'; // Fixed layout se koi column page ke bahar nahi bhagega
     table.style.borderCollapse = 'collapse';
     table.style.marginTop = '15px';
   }
 
-  printWrapper.querySelectorAll('th, td').forEach(cell => {
-    cell.style.padding = '6px 8px';
-    cell.style.fontSize = '12px';
+  // Column width ratio distribution (Total 100%)
+  const colWidths = ['22%', '36%', '14%', '14%', '14%']; // Date, Details, Given, Received, Balance
+  printWrapper.querySelectorAll('thead tr').forEach(tr => {
+    const ths = tr.querySelectorAll('th');
+    ths.forEach((th, idx) => {
+      if (colWidths[idx]) th.style.width = colWidths[idx];
+      th.style.padding = '6px 4px';
+      th.style.fontSize = '11px';
+    });
   });
 
-  printWrapper.querySelectorAll('tr').forEach(tr => {
+  printWrapper.querySelectorAll('tbody tr').forEach(tr => {
     tr.style.pageBreakInside = 'avoid';
+    const tds = tr.querySelectorAll('td');
+    tds.forEach((td, idx) => {
+      if (colWidths[idx]) td.style.width = colWidths[idx];
+      td.style.padding = '5px 4px';
+      td.style.fontSize = '11px';
+      td.style.wordBreak = 'break-word';
+    });
   });
 
   document.body.appendChild(printWrapper);
 
   const opt = {
-    margin:       [10, 8, 10, 8], // Top 10mm, Right 8mm, Bottom 10mm, Left 8mm (Uper aur side dono secure)
+    margin:       [8, 6, 8, 6], // Top 8mm, Right 6mm, Bottom 8mm, Left 6mm
     filename:     pdfFileName,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: 800 },
+    html2canvas:  { scale: 2, useCORS: true, scrollY: 0, windowWidth: 720 },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak:    { mode: ['css', 'legacy'] }
   };
@@ -2783,7 +2796,7 @@ window.onafterprint = function() {
       await navigator.share({
         files: [file],
         title: pdfFileName,
-        text: `Statement for ${custName}`
+        text: `Ledger statement for ${custName}`
       });
     } else {
       const link = document.createElement('a');
