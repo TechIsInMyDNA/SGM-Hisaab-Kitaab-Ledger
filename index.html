@@ -2723,33 +2723,61 @@ window.onafterprint = function() {
   const custName = cust ? cust.name.replace(/[/\\?%*:|"<>]/g, '').trim() : 'Customer';
   const pdfFileName = `${custName}_${d}-${m}-${y}_${hours}-${mins}.pdf`;
 
-  const element = document.getElementById('printStatementBody');
+  const originalBody = document.getElementById('printStatementBody');
+  if (!originalBody) return;
+
+  // Print jaisa exact full layout banane ke liye clone container
+  const printWrapper = document.createElement('div');
+  printWrapper.style.width = '750px';
+  printWrapper.style.padding = '15px';
+  printWrapper.style.background = '#ffffff';
+  printWrapper.style.color = '#000000';
+  printWrapper.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  printWrapper.innerHTML = originalBody.innerHTML;
+
+  // Sare scroll aur height restriction hatane ke liye
+  printWrapper.querySelectorAll('*').forEach(el => {
+    el.style.maxHeight = 'none';
+    el.style.overflow = 'visible';
+  });
+
+  document.body.appendChild(printWrapper);
 
   const opt = {
-    margin: [8, 10, 8, 10],
-    filename: pdfFileName,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    margin:       [8, 8, 8, 8],
+    filename:     pdfFileName,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
   try {
-    const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+    const pdfBlob = await html2pdf().set(opt).from(printWrapper).outputPdf('blob');
+    document.body.removeChild(printWrapper); // Clean up
+
     const file = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
         files: [file],
         title: pdfFileName,
-        text: `Ledger statement for ${custName}`
+        text: `Statement for ${custName}`
       });
     } else {
-      html2pdf().set(opt).from(element).save();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(pdfBlob);
+      link.download = pdfFileName;
+      link.click();
+      URL.revokeObjectURL(link.href);
     }
   } catch (err) {
     console.error("PDF generation/share error:", err);
-    html2pdf().set(opt).from(element).save();
+    if (document.body.contains(printWrapper)) {
+      document.body.removeChild(printWrapper);
+    }
+    // Fallback normal save
+    html2pdf().set(opt).from(originalBody).save();
   }
 }
 
